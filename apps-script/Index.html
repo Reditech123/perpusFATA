@@ -105,6 +105,41 @@ th{font-size:12px;color:var(--muted);font-weight:600}
 .legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .hidden{display:none!important}
+.katgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.katgrid button{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:left;cursor:pointer}
+.katgrid button b{display:block;font-size:17px;color:var(--brand)}
+.katgrid button span{display:block;font-size:13px;font-weight:600;line-height:1.3}
+.katgrid button i{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:4px}
+.menu button{position:relative}
+.cnt{position:absolute;top:10px;right:10px;background:var(--bad);color:#fff;font-style:normal;font-weight:700;font-size:12px;border-radius:999px;min-width:22px;height:22px;display:grid;place-items:center;padding:0 6px}
+.cntin{background:var(--bad);color:#fff;border-radius:999px;padding:0 6px;font-size:11px}
+.notif{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.notif button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 8px;text-align:left;cursor:pointer}
+.notif button b{display:block;font-size:20px;color:var(--muted)}
+.notif button span{font-size:11.5px;color:var(--muted);line-height:1.2;display:block}
+.notif button.on{border-color:var(--warn);background:var(--warnbg)}
+.notif button.on b{color:var(--warn)}
+.verif{display:flex;gap:8px;align-items:flex-start;background:var(--warnbg);color:#6b4a0a;border-radius:10px;padding:10px;font-size:13.5px;cursor:pointer}
+.verif input{width:20px;height:20px;flex:0 0 20px;margin:0}
+.idt th{font-weight:600}
+.mcard{background:linear-gradient(135deg,#1f4e5a,#2f6f7e);color:#fff;border-radius:16px;padding:16px;margin-bottom:12px}
+.mcard .mtop{display:flex;justify-content:space-between;align-items:flex-start;font-size:12px}
+.mcard .mtop span{display:block;opacity:.8}
+.mcard .mtag{border:1px solid rgba(255,255,255,.5);border-radius:6px;padding:2px 6px;font-size:10.5px;letter-spacing:1px}
+.mcard .mname{font-size:19px;font-weight:700;margin-top:12px}
+.mcard .msub{font-size:13px;opacity:.9}
+.mcard .mbar{background:#fff;border-radius:8px;padding:6px 10px;margin-top:10px;height:62px}
+.mcard .mbar svg{width:100%;height:50px;display:block}
+.kartusheet{display:grid;grid-template-columns:8.6cm 8.6cm;gap:.3cm;justify-content:center}
+.kartu{width:8.6cm;height:5.4cm;border:.6pt solid #000;border-radius:3mm;padding:3mm 4mm;font-family:Arial,sans-serif;color:#000;display:flex;flex-direction:column;break-inside:avoid;box-sizing:border-box}
+.kartu .kh{display:flex;justify-content:space-between;font-size:7.5pt;border-bottom:.6pt solid #000;padding-bottom:1mm}
+.kartu .kh span{font-size:7pt}
+.kartu .kt{font-size:6.5pt;letter-spacing:1pt;margin-top:1mm}
+.kartu .kn{font-size:11pt;font-weight:700;margin-top:1mm;line-height:1.15}
+.kartu .ks{font-size:8pt}
+.kartu .kb{flex:1;display:flex;align-items:center}
+.kartu .kb svg{width:100%;height:1.2cm}
+.kartu .kf{font-size:6.5pt}
 #printArea{display:none}
 @media print{
  @page{size:A4;margin:8mm}
@@ -146,7 +181,7 @@ th{font-size:12px;color:var(--muted);font-weight:600}
 /* ======================= WAJIB DIISI (khusus GitHub Pages) =======================
    Alamat Web App Apps Script yang berakhiran /exec (Terapkan > Kelola deployment).
    Jika halaman ini dibuka langsung dari alamat Apps Script, isian ini diabaikan. */
-window.API_URL = 'https://script.google.com/macros/s/AKfycbz-smK42XK7KkU6rLa7qdvcoUIhPcz_qi4QIBBLQwvrRNinij6yTgwlzo4dPnbfp3vB/exec';
+window.API_URL = 'TEMPEL_URL_WEB_APP_EXEC_DI_SINI';
 /* ================================================================================= */
 </script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -172,6 +207,8 @@ const IC = {
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   edit: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
   key: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M21 2l-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.5 16c.6-1.6 1.9-2.4 3.5-2.4s2.9.8 3.5 2.4M14.5 10h4M14.5 13.5h3"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2zM22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/></svg>',
   out: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>'
 };
 
@@ -363,7 +400,7 @@ function go(h) {
 }
 function route() {
   const h = CUR || (location.hash ? location.hash.slice(1) : '') || B.page || (B.mode === 'kiosk' ? 'presensi' : 'katalog');
-  const [tab, sub] = h.split('/');
+  const parts = h.split('/'), tab = parts[0], sub = parts.slice(1).join('/');
   $$('#tabs button').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
   stopCam(); $('#modalRoot').innerHTML = '';
   window.scrollTo(0, 0);
@@ -413,57 +450,100 @@ function vPresensi() {
   setTimeout(() => $('#pNim') && $('#pNim').focus(), 50);
 }
 
-/* ---------- katalog ---------- */
-const KC = { q: '', jenis: '', tersedia: false };
+/* ---------- katalog (OPAC) ---------- */
+const KC = { q: '', jenis: '', tersedia: false, field: 'semua', kategori: '', rak: '', mode: 'buku' };
+let KAT = null;
 function bookCard(b) {
   const st = b.total === 0 ? '<span class="badge warn">Belum ada eksemplar</span>' : b.tersedia > 0 ? '<span class="badge ok">Tersedia ' + b.tersedia + ' dari ' + b.total + '</span>' : '<span class="badge bad">Sedang dipinjam semua</span>';
   const call = (b.call || '').split(' ').slice(0, 3).join('<br>');
   return '<div class="card book" data-id="' + esc(b.id) + '"><div class="spine">' + call + '</div><div class="grow"><div class="t">' + esc(b.judul) + '</div>' +
     '<div class="m">' + esc(b.pengarang || '-') + (b.tahun ? ' · ' + esc(b.tahun) : '') + '</div><div class="row" style="margin-top:6px">' + st +
-    (b.rak && b.rak.length ? '<span class="badge">Rak ' + esc(b.rak.join(', ')) + '</span>' : '') + '<span class="badge" style="background:#f1ede4;color:#6b5a3a">' + esc(b.call || '') + '</span></div></div></div>';
+    (b.rak && b.rak.length ? '<span class="badge">Rak ' + esc(b.rak.join(', ')) + '</span>' : '') + '<span class="badge" style="background:#f1ede4;color:#6b5a3a">' + esc(b.call || '') + '</span>' +
+    (b.kelas ? '<span class="badge" style="background:#eef0f7;color:#3b4a7a">' + esc(b.kelas) + '</span>' : '') + '</div></div></div>';
 }
 function bindBooks() { $$('.book').forEach(el => el.onclick = () => showBook(el.dataset.id)); }
+async function loadKat() { if (!KAT) KAT = await call('kategori'); return KAT; }
 function vKatalog() {
-  view().innerHTML = '<section class="hero"><h2>Cari buku</h2><p class="muted" style="margin:0">Ketik judul, pengarang, subjek, ISBN, atau nomor panggil.</p></section>' +
-    '<div class="card">' + scanField('kq', 'Contoh: metodologi penelitian') +
-    '<div class="chips" id="kj">' + ['', 'Buku', 'Skripsi', 'File Digital', 'CD/Software'].map(j => '<button class="chip' + (KC.jenis === j ? ' on' : '') + '" data-j="' + j + '">' + (j || 'Semua') + '</button>').join('') +
+  view().innerHTML = '<section class="hero"><h2>Katalog perpustakaan</h2><p class="muted" style="margin:0">Cari berdasarkan judul, penulis, kategori, rak, atau kata kunci.</p></section>' +
+    '<div class="chips" id="kMode"><button class="chip' + (KC.mode === 'buku' ? ' on' : '') + '" data-m="buku">Buku & skripsi</button><button class="chip' + (KC.mode === 'jurnal' ? ' on' : '') + '" data-m="jurnal">Jurnal kampus</button></div>' +
+    '<div id="kBody"></div>';
+  $$('#kMode [data-m]').forEach(b => b.onclick = () => { KC.mode = b.dataset.m; vKatalog(); });
+  if (KC.mode === 'jurnal') return vJurnal();
+  $('#kBody').innerHTML = '<div class="card"><div class="row"><select id="kf" style="flex:0 0 132px"><option value="semua">Semua</option><option value="judul">Judul</option><option value="pengarang">Penulis</option><option value="subjek">Kata kunci / subjek</option><option value="isbn">ISBN</option><option value="call">No. panggil</option></select>' +
+    '<div class="grow">' + scanField('kq', 'Contoh: metodologi penelitian') + '</div></div>' +
+    '<div class="row" style="margin-top:8px"><select id="kk" class="grow"><option value="">Semua kategori</option></select><select id="kr" class="grow"><option value="">Semua rak</option></select></div>' +
+    '<div class="chips" id="kj">' + ['', 'Buku', 'Skripsi', 'File Digital', 'CD/Software'].map(j => '<button class="chip' + (KC.jenis === j ? ' on' : '') + '" data-j="' + j + '">' + (j || 'Semua jenis') + '</button>').join('') +
     '<button class="chip' + (KC.tersedia ? ' on' : '') + '" id="kt">Hanya yang tersedia</button></div><button class="btn block" id="kGo">Cari</button></div><div id="kRes"></div>';
-  $('#kq').value = KC.q;
+  $('#kq').value = KC.q; $('#kf').value = KC.field;
+  loadKat().then(k => {
+    if (!$('#kk')) return;
+    $('#kk').insertAdjacentHTML('beforeend', k.kategori.map(c => '<option value="' + esc(c.kode) + '">' + esc(c.kode) + ' (' + c.jumlah.toLocaleString('id-ID') + ')</option>').join(''));
+    $('#kr').insertAdjacentHTML('beforeend', k.rak.map(r => '<option value="' + esc(r.kode) + '">Rak ' + esc(r.kode) + (r.lokasi ? ' · ' + esc(r.lokasi) : '') + '</option>').join(''));
+    $('#kk').value = KC.kategori; $('#kr').value = KC.rak;
+    if (!KC.q && !KC.kategori && !KC.rak) jelajah(k);
+  }).catch(() => {});
   const go = () => {
-    KC.q = $('#kq').value.trim(); if (!KC.q) { toast('Ketik kata kunci dulu.', 'bad'); return; }
+    KC.q = $('#kq').value.trim(); KC.field = $('#kf').value; KC.kategori = $('#kk').value; KC.rak = $('#kr').value;
+    if (!KC.q && !KC.kategori && !KC.rak) { toast('Ketik kata kunci, atau pilih kategori / rak.', 'bad'); return; }
     loading($('#kRes'), 'Mencari...');
     call('cari', KC).then(r => {
       if (!$('#kRes')) return;
-      $('#kRes').innerHTML = '<p class="muted small">' + r.jumlah + ' judul ditemukan' + (r.jumlah > r.hasil.length ? ', ditampilkan ' + r.hasil.length + ' teratas' : '') + '.</p>' +
-        (r.hasil.length ? r.hasil.map(bookCard).join('') : '<div class="card muted">Tidak ada hasil. Coba kata kunci lain yang lebih pendek.</div>');
+      $('#kRes').innerHTML = '<p class="muted small">' + r.jumlah.toLocaleString('id-ID') + ' judul ditemukan' + (r.jumlah > r.hasil.length ? ', ditampilkan ' + r.hasil.length + ' teratas' : '') + '.</p>' +
+        (r.hasil.length ? r.hasil.map(bookCard).join('') : '<div class="card muted">Tidak ada hasil. Coba kata kunci lain atau ganti kategori.</div>');
       bindBooks();
     }).catch(e => { if ($('#kRes')) $('#kRes').innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
   };
   bindScan('kq', v => { $('#kq').value = v; go(); }, { title: 'Scan ISBN atau barcode buku', hint: 'Arahkan kamera ke barcode ISBN di sampul belakang.' });
   $('#kGo').onclick = go;
-  $$('#kj [data-j]').forEach(b => b.onclick = () => { KC.jenis = b.dataset.j; $$('#kj [data-j]').forEach(x => x.classList.toggle('on', x === b)); if (KC.q) go(); });
-  $('#kt').onclick = () => { KC.tersedia = !KC.tersedia; $('#kt').classList.toggle('on', KC.tersedia); if (KC.q) go(); };
-  if (KC.q) go();
-  else {
-    $('#kRes').innerHTML = '<h3>Sering dipinjam</h3><div id="kPop"><div class="loading"><span class="spin"></span></div></div>';
-    call('populer').then(list => {
-      if (!$('#kPop')) return;
-      $('#kPop').innerHTML = list.length ? '<div class="card list">' + list.map((b, i) => '<div class="book" data-id="' + esc(b.id) + '"><b style="width:22px;color:var(--accent)">' + (i + 1) + '</b><div class="grow"><div class="t">' + esc(b.judul) + '</div><div class="m">' + b.kali + ' kali dipinjam</div></div></div>').join('') + '</div>'
-        : '<div class="card muted small">Daftar buku terpopuler muncul setelah ada transaksi peminjaman.</div>';
-      bindBooks();
-    }).catch(() => { if ($('#kPop')) $('#kPop').innerHTML = ''; });
+  const pilih = () => {
+    if (!$('#kq').value.trim() && !$('#kk').value && !$('#kr').value) { KC.q = ''; KC.kategori = ''; KC.rak = ''; vKatalog(); return; }
+    go();
+  };
+  $('#kk').onchange = pilih; $('#kr').onchange = pilih;
+  $$('#kj [data-j]').forEach(b => b.onclick = () => { KC.jenis = b.dataset.j; $$('#kj [data-j]').forEach(x => x.classList.toggle('on', x === b)); if (KC.q || KC.kategori || KC.rak) go(); });
+  $('#kt').onclick = () => { KC.tersedia = !KC.tersedia; $('#kt').classList.toggle('on', KC.tersedia); if (KC.q || KC.kategori || KC.rak) go(); };
+  if (KC.q || KC.kategori || KC.rak) go();
+  else $('#kRes').innerHTML = '<h3>Jelajahi kategori</h3><div id="kGrid"><div class="loading"><span class="spin"></span></div></div><h3>Sering dipinjam</h3><div id="kPop"><div class="loading"><span class="spin"></span></div></div>';
+  function jelajah(k) {
+    if (!$('#kGrid')) return;
+    $('#kGrid').innerHTML = '<div class="katgrid">' + k.kategori.map(c => '<button data-k="' + esc(c.kode) + '"><b>' + esc(c.kode.split(' ')[0]) + '</b><span>' + esc(c.kode.split(' ').slice(1).join(' ') || c.kode) + '</span><i>' + c.jumlah.toLocaleString('id-ID') + ' judul</i></button>').join('') + '</div>';
+    $$('#kGrid [data-k]').forEach(b => b.onclick = () => { $('#kk').value = b.dataset.k; go(); });
   }
+  if (!KC.q && !KC.kategori && !KC.rak) call('populer').then(list => {
+    if (!$('#kPop')) return;
+    $('#kPop').innerHTML = list.length ? '<div class="card list">' + list.map((b, i) => '<div class="book" data-id="' + esc(b.id) + '"><b style="width:22px;color:var(--accent)">' + (i + 1) + '</b><div class="grow"><div class="t">' + esc(b.judul) + '</div><div class="m">' + b.kali + ' kali dipinjam</div></div></div>').join('') + '</div>'
+      : '<div class="card muted small">Daftar buku terpopuler muncul setelah ada transaksi peminjaman.</div>';
+    bindBooks();
+  }).catch(() => { if ($('#kPop')) $('#kPop').innerHTML = ''; });
 }
+function vJurnal() {
+  $('#kBody').innerHTML = '<div class="card">' + '<input id="jq" placeholder="Judul artikel, penulis, atau kata kunci">' +
+    '<button class="btn block" id="jGo" style="margin-top:10px">Cari artikel</button><p class="small muted" style="margin:8px 0 0">Artikel dari jurnal milik kampus (OJS) yang disinkronkan admin.</p></div><div id="jRes"></div>';
+  const go = () => {
+    const q = $('#jq').value.trim(); if (!q) { toast('Ketik kata kunci dulu.', 'bad'); return; }
+    loading($('#jRes'), 'Mencari...');
+    call('cariJurnal', { q }).then(r => {
+      if (!$('#jRes')) return;
+      $('#jRes').innerHTML = '<p class="muted small">' + r.jumlah + ' artikel ditemukan.</p>' + r.hasil.map(a => '<div class="card"><div class="t" style="font-weight:700">' + esc(a.judul) + '</div>' +
+        '<div class="small muted">' + esc(a.penulis || '-') + (a.tahun ? ' · ' + esc(a.tahun) : '') + ' · ' + esc(a.jurnal) + '</div>' +
+        (a.abstrak ? '<p class="small" style="margin:6px 0">' + esc(a.abstrak) + (a.abstrak.length >= 400 ? '…' : '') + '</p>' : '') +
+        (a.url ? '<a class="btn sm sec" href="' + esc(a.url) + '" target="_blank" rel="noopener">Buka artikel</a>' : '') + '</div>').join('') +
+        (r.cariLangsung.length ? '<div class="card small"><b>Cari langsung di situs jurnal:</b><div class="chips">' + r.cariLangsung.map(j => '<a class="chip" href="' + esc(j.url) + '" target="_blank" rel="noopener">' + esc(j.nama) + '</a>').join('') + '</div></div>' : '');
+    }).catch(e => { if ($('#jRes')) $('#jRes').innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
+  };
+  $('#jGo').onclick = go; $('#jq').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+}
+function isoDay(offset) { const d = new Date(Date.now() + offset * 864e5 + 7 * 3600e3); return d.toISOString().slice(0, 10); }
 async function showBook(id) {
   const m = modal('Detail buku', '<div class="loading"><span class="spin"></span></div>');
   try {
     const b = await call('detail', { id });
     const rows = [['Pengarang', b.pengarang], ['Penerbit', [b.penerbit, b.kota].filter(Boolean).join(', ')], ['Tahun', b.tahun], ['Edisi', b.edisi], ['ISBN', b.isbn],
-      ['Nomor panggil', b.call], ['Jenis', b.jenis], ['Subjek', b.subjek], ['Bahasa', b.bahasa], ['Kolasi', b.kolasi]].filter(r => r[1]);
-    const stCls = s => s === 'Tersedia' || s === 'Baca di tempat' ? 'ok' : s === 'Dipinjam' || s === 'Dipesan' ? 'warn' : 'bad';
+      ['Nomor panggil', b.call], ['Kategori', b.kelas], ['Jenis', b.jenis], ['Subjek', b.subjek], ['Bahasa', b.bahasa], ['Kolasi', b.kolasi]].filter(r => r[1]);
+    const stCls = s => s === 'Tersedia' || s === 'Baca di tempat' ? 'ok' : /Dipinjam|Dipesan|Menunggu/.test(s) ? 'warn' : 'bad';
     m.body.innerHTML = '<h2 style="margin:0 0 4px;font-size:18px">' + esc(b.judul) + '</h2>' +
       '<div class="row" style="margin:6px 0 10px">' + (b.tersedia ? '<span class="badge ok">Tersedia ' + b.tersedia + ' dari ' + b.total + '</span>' : '<span class="badge bad">Tidak ada yang tersedia</span>') +
-      (b.antrean ? '<span class="badge warn">' + b.antrean + ' orang mengantre</span>' : '') + '</div>' +
+      (b.antrean ? '<span class="badge warn">' + b.antrean + ' booking aktif</span>' : '') + '</div>' +
       '<table>' + rows.map(r => '<tr><th style="width:34%">' + r[0] + '</th><td>' + esc(r[1]) + '</td></tr>').join('') + '</table>' +
       '<h3>Lokasi eksemplar</h3>' + (b.eksemplar.length ? '<table><tr><th>Barcode</th><th>Rak</th><th>Status</th></tr>' + b.eksemplar.map(e =>
         '<tr><td>' + esc(e.barcode) + ' <span class="muted small">' + esc(e.salinan) + '</span></td><td><b>' + esc(e.rak || '-') + '</b></td><td><span class="badge ' + stCls(e.status) + '">' + esc(e.status) + '</span>' +
@@ -473,26 +553,38 @@ async function showBook(id) {
     const act = $('#bkAct');
     if (b.total === 0) act.innerHTML = '';
     else if (S.who && S.who.type === 'm') {
-      act.innerHTML = '<button class="btn block" id="bkPesan">' + (b.tersedia ? 'Booking: simpan untuk saya' : 'Booking: masuk antrean') + '</button><p class="small muted">Buku yang tersedia akan disimpan petugas untuk Anda. Ambil sebelum batas waktu.</p>';
+      act.innerHTML = '<div class="card" style="background:var(--soft);border:0"><b>Booking buku ini</b><label class="f">Rencana tanggal ambil</label>' +
+        '<input type="date" id="bkTgl" min="' + (b.hariIni || isoDay(0)) + '" max="' + isoDay(b.jadwalMaks || 7) + '" value="' + (b.ambilAwal || isoDay(0)) + '">' +
+        '<p class="small muted" style="margin:4px 0 0">Hari Minggu dan tanggal libur perpustakaan tidak bisa dipilih.</p>' +
+        '<button class="btn block" id="bkPesan" style="margin-top:10px">Ajukan booking</button>' +
+        '<p class="small muted" style="margin:8px 0 0">' + (b.accBooking ? 'Booking diperiksa dan disetujui petugas terlebih dulu. ' : '') +
+        'Jika semua eksemplar sedang dipinjam, Anda masuk antrean. Status bisa dipantau di Akun saya.</p></div>';
       $('#bkPesan').onclick = () => busy($('#bkPesan'), async () => {
-        const r = await call('pesan', { id: b.id });
+        const r = await call('pesan', { id: b.id, tanggal: $('#bkTgl').value });
         beep(true);
-        act.innerHTML = r.status === 'Siap diambil' ? '<div class="alert ok">Booking berhasil. Buku disiapkan untuk Anda' + (r.rak ? ' (rak ' + esc(r.rak) + ')' : '') + '. Ambil di meja petugas paling lambat <b>' + esc(r.batas) + '</b>.</div>'
-          : '<div class="alert warn">Anda masuk antrean nomor <b>' + r.urutan + '</b>. Status berubah menjadi "Siap diambil" di menu Akun saat buku dikembalikan.</div>';
+        act.innerHTML = r.status === 'Menunggu ACC' ? '<div class="alert info">Booking terkirim untuk diambil <b>' + esc(r.ambil) + '</b>. Menunggu persetujuan petugas; pantau statusnya di Akun saya.</div>'
+          : r.status === 'Siap diambil' ? '<div class="alert ok">Booking disetujui. Ambil di meja petugas mulai ' + esc(r.mulai) + ' sampai <b>' + esc(r.batas) + '</b>.</div>'
+          : '<div class="alert warn">Booking disetujui. Anda antrean ke-<b>' + r.urutan + '</b>.</div>';
       }).catch(() => {});
     } else act.innerHTML = '<button type="button" class="btn ghost block" data-nav="akun">Masuk ke Akun untuk booking</button>';
   } catch (e) { m.body.innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; }
 }
 
 /* ---------- akun mahasiswa ---------- */
+const RS_BADGE = { 'Menunggu ACC': 'warn', 'Antre': 'warn', 'Siap diambil': 'ok', 'Ditolak': 'bad', 'Dibatalkan petugas': 'bad', 'Kedaluwarsa': 'bad' };
+function resLine(x) {
+  const txt = x.status === 'Menunggu ACC' ? 'Menunggu ACC petugas' : x.status === 'Antre' ? 'Disetujui · antrean ke-' + x.urutan :
+    x.status === 'Siap diambil' ? 'Siap diambil sampai ' + x.batas : x.status;
+  return '<span class="badge ' + (RS_BADGE[x.status] || '') + '">' + esc(txt) + '</span>' + (x.ambil ? '<span class="small muted">rencana ambil ' + esc(x.ambil) + '</span>' : '');
+}
 function vAkun() {
   if (!S.who || S.who.type !== 'm') {
-    view().innerHTML = '<section class="hero"><h2>Akun saya</h2><p class="muted" style="margin:0">Lihat pinjaman, jatuh tempo, booking, dan riwayat kunjungan.</p></section>' +
+    view().innerHTML = '<section class="hero"><h2>Akun saya</h2><p class="muted" style="margin:0">Kartu anggota, pinjaman, jatuh tempo, booking, dan riwayat bacaan.</p></section>' +
       '<div class="card"><label class="f">NIM</label><input id="aNim" inputmode="numeric" autocomplete="username">' +
       '<label class="f">PIN</label><input id="aPin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="6 digit">' +
       '<p class="small muted">PIN awal adalah <b>6 digit terakhir NIM</b>. Setelah masuk, segera ganti PIN Anda.</p>' +
       '<button class="btn block" id="aGo">Masuk</button></div>' +
-      '<p class="small muted">Belum terdaftar? Data anggota diinput oleh petugas perpustakaan. Silakan datang ke meja layanan.</p>';
+      '<p class="small muted">Belum terdaftar? Pendaftaran anggota dilakukan oleh petugas perpustakaan. Silakan datang ke meja layanan membawa KTM.</p>';
     const go = () => busy($('#aGo'), async () => {
       const r = await call('login', { nim: $('#aNim').value, pin: $('#aPin').value });
       S.token = r.token; S.who = { type: 'm', nama: r.nama, nim: r.nim }; saveSess();
@@ -504,34 +596,58 @@ function vAkun() {
   loading();
   call('akun').then(a => {
     if ((CUR || 'akun').indexOf('akun') !== 0 && location.hash.indexOf('akun') < 0) return;
-    const p = a.profil, st = a.statistik;
-    view().innerHTML = '<div class="card" style="background:var(--brand);color:#fff;border:0"><div class="row"><div class="grow"><div style="font-size:18px;font-weight:700">' + esc(p.nama) + '</div>' +
-      '<div style="opacity:.85;font-size:13.5px">' + esc(p.nim) + ' · ' + esc(p.prodi || p.jenis) + '</div></div><button class="btn sec sm" id="aOut">Keluar</button></div></div>' +
+    const p = a.profil, st = a.statistik, at = a.aturan;
+    const aktifCard = x => {
+      let badge, right = '';
+      if (x.status === 'Menunggu ACC kembali') badge = '<span class="badge warn">Pengembalian menunggu ACC petugas</span>';
+      else if (x.ajuPanjang === 'Menunggu ACC') badge = '<span class="badge warn">Perpanjangan menunggu ACC · tempo ' + esc(x.tempo) + '</span>';
+      else badge = '<span class="badge ' + (x.terlambat ? 'bad' : 'ok') + '">' + (x.terlambat ? 'Terlambat ' + x.terlambat + ' hari · ' + rp(x.denda) : 'Kembali ' + esc(x.tempo)) + '</span>';
+      if (x.status === 'Dipinjam') right = (x.bisaPanjang ? '<button class="btn sm sec" data-pp="' + esc(x.barcode) + '">Ajukan perpanjangan</button>' : '') +
+        '<button class="btn sm ghost" data-kb="' + esc(x.barcode) + '">Ajukan pengembalian</button>';
+      return '<div class="card"><div class="t" style="font-weight:700">' + esc(x.judul) + '</div><div class="small muted">' + esc(x.barcode) + ' · dipinjam ' + esc(x.pinjam) + (x.panjang ? ' · diperpanjang ' + x.panjang + '×' : '') + '</div>' +
+        '<div class="row" style="margin-top:8px">' + badge + '</div>' + (!x.bisaPanjang && x.alasan && x.status === 'Dipinjam' && x.ajuPanjang !== 'Menunggu ACC' ? '<div class="small muted" style="margin-top:4px">Perpanjangan: ' + esc(x.alasan) + '</div>' : '') +
+        (/ditolak/i.test(x.catatan) ? '<div class="small" style="color:var(--bad);margin-top:4px">' + esc(x.catatan) + '</div>' : '') +
+        (right ? '<div class="row" style="margin-top:8px">' + right + '</div>' : '') + '</div>';
+    };
+    view().innerHTML =
+      '<div class="mcard"><div class="mtop"><div><b>' + esc(a.perpustakaan || 'Perpustakaan') + '</b><span>' + esc(a.instansi || '') + '</span></div><span class="mtag">KARTU ANGGOTA</span></div>' +
+      '<div class="mname">' + esc(p.nama) + '</div><div class="msub">' + esc(p.nim) + ' · ' + esc(p.prodi || p.jenis) + (p.angkatan ? ' · ' + esc(p.angkatan) : '') + '</div>' +
+      '<div class="mbar" id="mBar"></div><div class="row" style="justify-content:space-between;margin-top:6px"><span class="msub">' + (p.berlaku ? 'Berlaku s.d. ' + esc(p.berlaku) : 'Status: ' + esc(p.status)) + '</span>' +
+      '<span class="row"><button class="btn sec sm" id="aCard">Cetak kartu</button><button class="btn sec sm" id="aOut">Keluar</button></span></div></div>' +
       (p.pinDefault ? '<div class="alert warn">Anda masih memakai PIN awal (6 digit terakhir NIM). <button type="button" id="aPinNow" class="linkbtn">Ganti PIN sekarang</button></div>' : '') +
       (/^aktif$/i.test(p.status) ? '' : '<div class="alert bad">Status keanggotaan: ' + esc(p.status) + '. Hubungi petugas.</div>') +
+      (a.aktif.some(x => x.terlambat) ? '<div class="alert bad">Ada buku yang terlambat dikembalikan. Segera kembalikan untuk menghentikan denda.</div>' : '') +
       '<div class="grid2"><div class="tile"><b>' + st.kunjungan + '</b><span>Total kunjungan</span></div><div class="tile"><b>' + st.kunjunganBulanIni + '</b><span>Kunjungan bulan ini</span></div>' +
-      '<div class="tile"><b>' + st.totalPinjam + '</b><span>Total peminjaman</span></div><div class="tile"><b style="color:' + (st.totalDenda ? 'var(--bad)' : 'inherit') + '">' + rp(st.totalDenda) + '</b><span>Denda berjalan</span></div></div>' +
+      '<div class="tile"><b>' + st.totalPinjam + '</b><span>Buku pernah dipinjam</span></div><div class="tile"><b style="color:' + (st.totalDenda ? 'var(--bad)' : 'inherit') + '">' + rp(st.totalDenda) + '</b><span>Denda berjalan</span></div></div>' +
       (st.terakhir ? '<p class="small muted">Kunjungan terakhir: ' + esc(st.terakhir) + '</p>' : '') +
-      '<h3>Sedang dipinjam (' + a.aktif.length + ' dari maks. ' + a.aturan.maks + ')</h3>' +
-      (a.aktif.length ? a.aktif.map(x => '<div class="card"><div class="t" style="font-weight:700">' + esc(x.judul) + '</div><div class="small muted">' + esc(x.barcode) + ' · dipinjam ' + esc(x.pinjam) + '</div>' +
-        '<div class="row" style="margin-top:8px"><span class="badge ' + (x.terlambat ? 'bad' : 'ok') + '">' + (x.terlambat ? 'Terlambat ' + x.terlambat + ' hari · ' + rp(x.denda) : 'Kembali ' + esc(x.tempo)) + '</span>' +
-        '<span class="grow"></span>' + (x.bisaPanjang ? '<button class="btn sm sec" data-pp="' + esc(x.barcode) + '">Perpanjang</button>' : '<span class="small muted">' + esc(x.alasan) + '</span>') + '</div></div>').join('')
-        : '<div class="card muted small">Tidak ada buku yang sedang dipinjam.</div>') +
-      (a.aturan.mandiri ? '<button class="btn block" id="aSelf" style="margin-bottom:12px">' + IC.cam.replace('<svg', '<svg style="width:18px;height:18px;vertical-align:-4px;stroke:#fff"') + ' Pinjam mandiri: scan buku</button>' : '') +
-      '<h3>Booking saya</h3>' + (a.pesan.length ? a.pesan.map(x => '<div class="card"><div style="font-weight:700">' + esc(x.judul) + '</div><div class="row" style="margin-top:6px">' +
-        (x.status === 'Siap diambil' ? '<span class="badge ok">Siap diambil sampai ' + esc(x.batas) + '</span>' : '<span class="badge warn">Antrean ke-' + x.urutan + '</span>') +
-        '<span class="grow"></span><button class="btn sm danger" data-bt="' + esc(x.rid) + '">Batalkan</button></div></div>').join('') : '<div class="card muted small">Belum ada booking. Booking dari menu Cari buku.</div>') +
+      '<h3>Sedang dipinjam (' + a.aktif.length + ' dari maks. ' + at.maks + ')</h3>' +
+      (a.aktif.length ? a.aktif.map(aktifCard).join('') : '<div class="card muted small">Tidak ada buku yang sedang dipinjam.</div>') +
+      (a.pengajuan.length ? '<h3>Pengajuan pinjam</h3>' + a.pengajuan.map(x => '<div class="card"><b>' + esc(x.judul) + '</b><div class="row" style="margin-top:6px"><span class="badge warn">Menunggu ACC petugas</span><span class="small muted">' + esc(x.barcode) + '</span></div><p class="small muted" style="margin:6px 0 0">Tunjukkan buku dan KTM ke petugas untuk verifikasi.</p></div>').join('') : '') +
+      (at.mandiri ? '<button class="btn block" id="aSelf" style="margin-bottom:12px">' + IC.cam.replace('<svg', '<svg style="width:18px;height:18px;vertical-align:-4px;stroke:#fff"') + ' Ajukan pinjam: scan buku</button>' : '') +
+      '<h3>Booking saya</h3>' + (a.pesan.length ? a.pesan.map(x => '<div class="card"' + (x.selesai ? ' style="opacity:.8"' : '') + '><div style="font-weight:700">' + esc(x.judul) + '</div><div class="row" style="margin-top:6px">' + resLine(x) +
+        (x.selesai ? '' : '<span class="grow"></span><button class="btn sm danger" data-bt="' + esc(x.rid) + '">Batalkan</button>') + '</div>' +
+        (x.catatan ? '<div class="small" style="margin-top:6px;color:' + (x.selesai ? 'var(--bad)' : 'var(--muted)') + '">Catatan petugas: ' + esc(x.catatan) + '</div>' : '') + '</div>').join('') : '<div class="card muted small">Belum ada booking. Booking dari menu Cari buku.</div>') +
       (a.denda.length ? '<h3>Denda belum lunas</h3><div class="card list">' + a.denda.map(d => '<div class="row"><span class="grow">' + esc(d.judul) + '</span><b style="color:var(--bad)">' + rp(d.denda) + '</b></div>').join('') + '<p class="small muted">Bayar di meja petugas.</p></div>' : '') +
-      '<h3>Riwayat peminjaman</h3>' + (a.riwayat.length ? '<div class="card"><table><tr><th>Judul</th><th>Pinjam</th><th>Kembali</th></tr>' + a.riwayat.map(r => '<tr><td>' + esc(r.judul) + (r.denda ? '<div class="small" style="color:var(--bad)">denda ' + rp(r.denda) + ' ' + esc(r.statusDenda) + '</div>' : '') + '</td><td class="small">' + esc(r.pinjam) + '</td><td class="small">' + esc(r.kembali) + '</td></tr>').join('') + '</table></div>' : '<div class="card muted small">Belum ada riwayat.</div>') +
-      '<div class="card small muted">Aturan: pinjam ' + a.aturan.lama + ' hari, maks. ' + a.aturan.maks + ' buku, perpanjang ' + a.aturan.maksPanjang + ' kali, denda ' + rp(a.aturan.denda) + '/hari per buku.</div>' +
+      '<h3>Riwayat bacaan</h3>' + (a.riwayat.length ? '<div class="card"><table><tr><th>Judul</th><th>Pinjam</th><th>Kembali</th></tr>' + a.riwayat.map(r => '<tr><td>' + esc(r.judul) + (r.denda ? '<div class="small" style="color:var(--bad)">denda ' + rp(r.denda) + ' ' + esc(r.statusDenda) + '</div>' : '') + '</td><td class="small">' + esc(r.pinjam) + '</td><td class="small">' + esc(r.kembali) + '</td></tr>').join('') + '</table></div>' : '<div class="card muted small">Belum ada riwayat.</div>') +
+      '<div class="card small muted">Aturan: pinjam ' + at.lama + ' hari, maks. ' + at.maks + ' buku, perpanjang ' + at.maksPanjang + ' kali' + (at.accPanjang ? ' (dengan ACC petugas, tidak bisa jika sedang dibooking orang lain)' : '') + ', denda ' + rp(at.denda) + '/hari per buku.</div>' +
       '<button class="btn ghost block" id="aPinBtn">' + IC.key.replace('<svg', '<svg style="width:18px;height:18px;vertical-align:-4px;stroke:var(--brand)"') + ' Ganti PIN</button>';
+    $('#mBar').appendChild(barcodeSvg(p.nim, { height: 50, background: '#ffffff' }));
+    $('#aCard').onclick = () => printKartu({ nama: a.perpustakaan, instansi: a.instansi, kartu: [p] });
     $('#aOut').onclick = () => { call('logout').catch(() => {}); clearSess(); vAkun(); };
     $('#aPinBtn').onclick = gantiPinModal;
     if ($('#aPinNow')) $('#aPinNow').onclick = gantiPinModal;
-    $$('[data-pp]').forEach(b => b.onclick = () => busy(b, async () => { const r = await call('perpanjang', { barcode: b.dataset.pp }); toast('Diperpanjang sampai ' + r.tempo, 'ok'); vAkun(); }).catch(() => {}));
-    $$('[data-bt]').forEach(b => b.onclick = () => { if (confirm('Batalkan booking ini?')) busy(b, async () => { await call('batalPesan', { rid: b.dataset.bt }); toast('Booking dibatalkan.', 'ok'); vAkun(); }).catch(() => {}); });
-    if ($('#aSelf')) $('#aSelf').onclick = () => openScanner({ title: 'Pinjam mandiri', hint: 'Scan barcode buku yang akan Anda pinjam.', onCode: async code => {
-      const r = await call('pinjamMandiri', { barcode: code }); setTimeout(vAkun, 900); return { msg: r.judul + ', kembali ' + r.tempo };
+    $$('[data-pp]').forEach(b => b.onclick = () => busy(b, async () => {
+      const r = await call('perpanjang', { barcode: b.dataset.pp });
+      toast(r.status === 'Menunggu ACC' ? 'Perpanjangan diajukan. Menunggu ACC petugas.' : 'Diperpanjang sampai ' + r.tempo, 'ok'); vAkun();
+    }).catch(() => {}));
+    $$('[data-kb]').forEach(b => b.onclick = () => confirmBox('Ajukan pengembalian?', 'Serahkan buku ke meja petugas. Pengembalian sah setelah petugas memeriksa buku dan memberi ACC; denda dihitung sampai tanggal ACC.', 'Ya, ajukan').then(y => {
+      if (y) busy(b, async () => { await call('ajukanKembali', { barcode: b.dataset.kb }); toast('Pengembalian diajukan. Serahkan buku ke petugas.', 'ok'); vAkun(); }).catch(() => {});
+    }));
+    $$('[data-bt]').forEach(b => b.onclick = () => confirmBox('Batalkan booking?', 'Booking yang dibatalkan tidak bisa dikembalikan.', 'Batalkan booking').then(y => {
+      if (y) busy(b, async () => { await call('batalPesan', { rid: b.dataset.bt }); toast('Booking dibatalkan.', 'ok'); vAkun(); }).catch(() => {});
+    }));
+    if ($('#aSelf')) $('#aSelf').onclick = () => openScanner({ title: 'Ajukan pinjam', hint: 'Scan barcode buku, lalu bawa buku dan KTM ke petugas untuk ACC.', onCode: async code => {
+      const r = await call('pinjamMandiri', { barcode: code }); setTimeout(vAkun, 900); return { msg: r.judul + ' · menunggu ACC petugas' };
     } });
   }).catch(e => { view().innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
 }
@@ -546,6 +662,23 @@ function gantiPinModal() {
     await call('gantiPin', { lama: $('#gp1').value, baru: $('#gp2').value });
     m.close(); toast('PIN berhasil diganti.', 'ok'); vAkun();
   }).catch(() => {});
+}
+// Dialog konfirmasi & isian alasan (tanpa alert/confirm bawaan browser).
+function confirmBox(title, text, okText) {
+  return new Promise(res => {
+    const m = modal(title, '<p style="margin-top:0">' + esc(text) + '</p><div class="row"><button class="btn ghost grow" id="cbNo">Batal</button><button class="btn grow" id="cbYes">' + esc(okText || 'Ya') + '</button></div>', () => res(false));
+    $('#cbNo').onclick = () => { m.close(); };
+    $('#cbYes').onclick = () => { $('#modalRoot').innerHTML = ''; res(true); };
+  });
+}
+function askReason(title, hint, okText) {
+  return new Promise(res => {
+    const m = modal(title, '<p class="small muted" style="margin-top:0">' + esc(hint) + '</p><textarea id="arTxt" rows="3"></textarea>' +
+      '<div class="row" style="margin-top:10px"><button class="btn ghost grow" id="arNo">Batal</button><button class="btn danger grow" id="arYes">' + esc(okText || 'Kirim') + '</button></div>', () => res(null));
+    setTimeout(() => $('#arTxt') && $('#arTxt').focus(), 50);
+    $('#arNo').onclick = () => m.close();
+    $('#arYes').onclick = () => { const v = $('#arTxt').value.trim(); if (!v) { toast('Alasan wajib diisi.', 'bad'); return; } $('#modalRoot').innerHTML = ''; res(v); };
+  });
 }
 
 /* ---------- petugas ---------- */
@@ -563,13 +696,18 @@ function vPetugas(sub) {
     $('#lpGo').onclick = go; $('#lpP').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
     return;
   }
-  const pages = { sirkulasi: pSirkulasi, kembali: pKembali, rak: pRak, label: pLabel, rekap: pRekap, tambah: pTambah, status: pStatus, reset: pReset };
-  if (sub && pages[sub]) return pages[sub]();
-  const items = [['sirkulasi', IC.swap, 'Peminjaman', 'Scan NIM lalu buku'], ['kembali', IC.ret, 'Pengembalian', 'Scan buku, hitung denda'],
-    ['rak', IC.shelf, 'Isi rak', 'Scan rak lalu buku-bukunya'], ['label', IC.tag, 'Cetak label', 'Barcode format FATA'], ['rekap', IC.chart, 'Rekap', 'Harian, bulanan, tahunan']];
-  if (isAdmin()) items.push(['tambah', IC.plus, 'Tambah buku', 'Judul & barcode baru'], ['status', IC.edit, 'Status eksemplar', 'Rusak, hilang, hapus'], ['reset', IC.key, 'Reset PIN', 'Kembalikan PIN awal']);
+  const pages = { persetujuan: pPersetujuan, sirkulasi: pSirkulasi, kembali: pKembali, rak: pRak, label: pLabel, rekap: pRekap, tambah: pTambah,
+    status: pStatus, reset: pReset, anggota: pAnggota, jurnal: pJurnalAdmin };
+  if (sub && pages[sub.split('/')[0]]) return pages[sub.split('/')[0]](sub.split('/')[1]);
+  const items = [['persetujuan', IC.check, 'Persetujuan', 'Booking, pinjam, kembali, perpanjang', 'total'],
+    ['sirkulasi', IC.swap, 'Peminjaman', 'Verifikasi identitas, scan buku'], ['kembali', IC.ret, 'Pengembalian', 'Scan buku, hitung denda', 'kembali'],
+    ['rak', IC.shelf, 'Isi rak', 'Scan rak lalu buku-bukunya'], ['label', IC.tag, 'Cetak label', 'Barcode format FATA'], ['rekap', IC.chart, 'Rekap', 'Harian, bulanan, tahunan'],
+    ['anggota', IC.user, 'Anggota & kartu', isAdmin() ? 'Daftarkan anggota, cetak kartu' : 'Cetak kartu anggota']];
+  if (isAdmin()) items.push(['tambah', IC.plus, 'Tambah buku', 'Judul & barcode baru'], ['status', IC.edit, 'Status eksemplar', 'Rusak, hilang, hapus'],
+    ['reset', IC.key, 'Reset PIN', 'Kembalikan PIN awal'], ['jurnal', IC.book, 'Jurnal kampus', 'Hubungkan OJS kampus']);
   view().innerHTML = '<div class="row" style="margin-bottom:10px"><div class="grow"><div class="muted small">Masuk sebagai</div><h2 style="margin:0">' + esc(S.who.nama) + ' <span class="badge">' + esc(S.who.peran) + '</span></h2></div>' +
-    '<button class="btn ghost sm" id="ptOut">Keluar</button></div><div class="menu">' + items.map(i => '<button data-go="' + i[0] + '">' + i[1] + '<b>' + i[2] + '</b><span>' + i[3] + '</span></button>').join('') + '</div>' +
+    '<button class="btn ghost sm" id="ptOut">Keluar</button></div><div id="ptNotif"></div><div class="menu">' + items.map(i => '<button data-go="' + i[0] + '">' + i[1] +
+    (i[4] ? '<em class="cnt hidden" data-cnt="' + i[4] + '"></em>' : '') + '<b>' + i[2] + '</b><span>' + i[3] + '</span></button>').join('') + '</div>' +
     '<button class="btn ghost block" id="ptPin" style="margin-top:14px">Ganti PIN petugas saya</button>' +
     '<p class="small muted" style="margin-top:14px">Tips: scanner USB/Bluetooth bekerja seperti keyboard. Klik kolom input, lalu scan, otomatis terkirim.</p>';
   $$('[data-go]').forEach(b => b.onclick = () => go('petugas/' + b.dataset.go));
@@ -578,47 +716,216 @@ function vPetugas(sub) {
     const m = modal('Ganti PIN petugas', '<label class="f">PIN lama</label><input id="pp1" type="password"><label class="f">PIN baru (min. 6)</label><input id="pp2" type="password"><button class="btn block" id="ppGo" style="margin-top:12px">Simpan</button>');
     $('#ppGo').onclick = () => busy($('#ppGo'), async () => { await call('gantiPinPetugas', { lama: $('#pp1').value, baru: $('#pp2').value }); m.close(); toast('PIN petugas diganti.', 'ok'); }).catch(() => {});
   };
+  call('ringkas').then(n => {
+    if (!$('#ptNotif')) return;
+    const total = n.booking + n.pinjam + n.kembali + n.perpanjang;
+    const set = (k, v) => { const el = $('[data-cnt="' + k + '"]'); if (el && v) { el.textContent = v; el.classList.remove('hidden'); } };
+    set('total', total); set('kembali', n.kembali);
+    $('#ptNotif').innerHTML = '<div class="notif">' + [['Booking perlu ACC', n.booking, 'booking'], ['Peminjaman perlu ACC', n.pinjam, 'pinjam'], ['Pengembalian perlu ACC', n.kembali, 'kembali'],
+      ['Perpanjangan perlu ACC', n.perpanjang, 'perpanjang'], ['Jadwal ambil hari ini', n.jadwalHariIni, 'jadwal'], ['Denda belum lunas', n.denda, 'denda']]
+      .map(x => '<button data-nav="petugas/persetujuan/' + x[2] + '" class="' + (x[1] ? 'on' : '') + '"><b>' + x[1] + '</b><span>' + x[0] + '</span></button>').join('') + '</div>';
+  }).catch(() => {});
 }
 function back(title) { return '<div class="row" style="margin-bottom:8px"><button type="button" class="btn ghost sm" data-nav="petugas">&larr; Menu</button><h2 class="grow" style="margin:0">' + esc(title) + '</h2></div>'; }
 
+function identitasHtml(m) {
+  if (!m) return '<div class="alert bad">Data anggota tidak ditemukan.</div>';
+  const row = (k, v) => v ? '<tr><th style="width:38%">' + k + '</th><td>' + esc(v) + '</td></tr>' : '';
+  return '<table class="idt">' + row('Nama', m.nama) + row('NIM/NIP', m.nim) + row('Prodi/Unit', m.prodi) + row('Angkatan', m.angkatan) + row('Jenis', m.jenis) +
+    row('Email', m.email) + row('No. HP', m.hp) + row('Status', m.status) + row('Berlaku s.d.', m.berlaku) + '</table>';
+}
+function verifBox(id, wajib) {
+  return '<label class="verif"><input type="checkbox" id="' + id + '"> <span>Identitas sudah diverifikasi: nama, NIM, dan foto cocok dengan KTM/kartu anggota' + (wajib ? ' <b>(wajib)</b>' : '') + '</span></label>';
+}
+
+/* ---------- persetujuan (dasbor ACC) ---------- */
+function pPersetujuan(tab) {
+  const TABS = [['booking', 'Booking'], ['pinjam', 'Pinjam'], ['kembali', 'Kembali'], ['perpanjang', 'Perpanjang'], ['jadwal', 'Jadwal ambil'], ['denda', 'Denda']];
+  tab = tab || 'booking';
+  view().innerHTML = back('Persetujuan') + '<div class="chips" id="psTabs"></div><div id="psBody"><div class="loading"><span class="spin"></span></div></div>';
+  const reload = () => call('persetujuan').then(d => render(d)).catch(e => { if ($('#psBody')) $('#psBody').innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
+  function render(d) {
+    if (!$('#psBody')) return;
+    const n = d.jumlah;
+    $('#psTabs').innerHTML = TABS.map(t => '<button class="chip' + (t[0] === tab ? ' on' : '') + '" data-t="' + t[0] + '">' + t[1] +
+      (t[0] === 'jadwal' ? ' (' + d.jadwal.length + ')' : t[0] === 'denda' ? ' (' + d.denda.transaksi + ')' : n[t[0]] ? ' <b class="cntin">' + n[t[0]] + '</b>' : '') + '</button>').join('');
+    $$('#psTabs [data-t]').forEach(b => b.onclick = () => { tab = b.dataset.t; render(d); });
+    const empty = t => '<div class="card muted small">' + t + '</div>';
+    const B = $('#psBody');
+    if (tab === 'booking') {
+      B.innerHTML = '<p class="small muted">Booking baru dari mahasiswa. ACC: buku disiapkan (jika ada yang tersedia) atau masuk antrean.</p>' + (d.bookingAcc.length ? d.bookingAcc.map(x =>
+        '<div class="card"><b>' + esc(x.judul) + '</b><div class="small muted">' + esc(x.nama) + ' (' + esc(x.nim) + ') · diajukan ' + esc(x.pesan) + '</div>' +
+        '<div class="row" style="margin-top:6px"><span class="badge">Rencana ambil ' + esc(x.ambil) + '</span><span class="badge ' + (x.tersedia ? 'ok' : 'warn') + '">' + (x.tersedia ? x.tersedia + ' eksemplar tersedia' : 'Semua dipinjam → antre') + '</span></div>' +
+        '<div class="row" style="margin-top:10px"><button class="btn grow" data-acb="' + esc(x.rid) + '">ACC</button><button class="btn danger grow" data-tlb="' + esc(x.rid) + '">Tolak</button></div></div>').join('') : empty('Tidak ada booking yang menunggu ACC.'));
+      $$('[data-acb]').forEach(b => b.onclick = () => busy(b, async () => { const r = await call('accBooking', { rid: b.dataset.acb, setuju: true }); toast(r.status === 'Antre' ? 'Disetujui, masuk antrean ke-' + r.urutan : 'Disetujui, buku disiapkan sampai ' + r.batas, 'ok'); reload(); }).catch(() => {}));
+      $$('[data-tlb]').forEach(b => b.onclick = () => askReason('Tolak booking', 'Alasan dikirim ke mahasiswa (contoh: buku khusus dosen, kuota penuh).', 'Tolak').then(al => { if (al) busy(b, async () => { await call('accBooking', { rid: b.dataset.tlb, setuju: false, alasan: al }); toast('Booking ditolak.', 'ok'); reload(); }).catch(() => {}); }));
+    }
+    if (tab === 'pinjam') {
+      B.innerHTML = '<p class="small muted">Pengajuan pinjam mandiri. Cocokkan identitas dengan KTM dan buku fisik sebelum ACC.</p>' + (d.pinjamAcc.length ? d.pinjamAcc.map(x =>
+        '<div class="card"><b>' + esc(x.judul) + '</b><div class="small muted">' + esc(x.barcode) + ' · ' + esc(x.diajukan) + '</div>' + identitasHtml(x.identitas) +
+        (x.layak.length ? '<div class="alert bad">' + x.layak.map(esc).join('<br>') + '</div>' : '') + verifBox('v_' + x.no, d.wajibVerif) +
+        '<div class="row" style="margin-top:10px"><button class="btn grow" data-acp="' + esc(x.no) + '">ACC pinjam</button><button class="btn danger grow" data-tlp="' + esc(x.no) + '">Tolak</button></div></div>').join('') : empty('Tidak ada pengajuan pinjam.'));
+      $$('[data-acp]').forEach(b => b.onclick = () => busy(b, async () => { const v = $('#v_' + b.dataset.acp); const r = await call('accPinjam', { no: b.dataset.acp, setuju: true, verif: v && v.checked }); toast('Disetujui. Jatuh tempo ' + r.tempo, 'ok'); beep(true); reload(); }).catch(() => {}));
+      $$('[data-tlp]').forEach(b => b.onclick = () => askReason('Tolak pengajuan pinjam', 'Contoh: identitas tidak sesuai, buku tidak dibawa ke meja.', 'Tolak').then(al => { if (al) busy(b, async () => { await call('accPinjam', { no: b.dataset.tlp, setuju: false, alasan: al }); toast('Pengajuan ditolak.', 'ok'); reload(); }).catch(() => {}); }));
+    }
+    if (tab === 'kembali') {
+      B.innerHTML = '<p class="small muted">Mahasiswa sudah mengajukan pengembalian. Periksa fisik buku, pilih kondisi, lalu ACC. Pengembalian langsung di meja tetap bisa lewat menu Pengembalian (scan).</p>' + (d.kembaliAcc.length ? d.kembaliAcc.map(x =>
+        '<div class="card"><b>' + esc(x.judul) + '</b><div class="small muted">' + esc(x.barcode) + ' · ' + esc(x.nama) + ' (' + esc(x.nim) + ') · diajukan ' + esc(x.diajukan) + '</div>' +
+        '<div class="row" style="margin-top:6px"><span class="badge ' + (x.terlambat ? 'bad' : 'ok') + '">' + (x.terlambat ? 'Terlambat ' + x.terlambat + ' hari · denda ' + rp(x.denda) : 'Tepat waktu (tempo ' + esc(x.tempo) + ')') + '</span></div>' +
+        '<div class="row" style="margin-top:10px"><select id="k_' + esc(x.no) + '" class="grow"><option>Baik</option><option>Rusak ringan</option><option>Rusak berat</option></select>' +
+        '<button class="btn" data-ack="' + esc(x.no) + '">ACC kembali</button><button class="btn danger" data-tlk="' + esc(x.no) + '">Tolak</button></div></div>').join('') : empty('Tidak ada pengembalian yang menunggu ACC.'));
+      $$('[data-ack]').forEach(b => b.onclick = () => busy(b, async () => {
+        const r = await call('accKembali', { no: b.dataset.ack, setuju: true, kondisi: $('#k_' + b.dataset.ack).value });
+        toast('Pengembalian diterima' + (r.denda ? ', denda ' + r.dendaTeks : '') + (r.untuk ? '. Simpan untuk booking ' + r.untuk.nama : ''), 'ok'); beep(true); reload();
+      }).catch(() => {}));
+      $$('[data-tlk]').forEach(b => b.onclick = () => askReason('Tolak pengembalian', 'Contoh: buku belum diserahkan, buku yang diserahkan berbeda.', 'Tolak').then(al => { if (al) busy(b, async () => { await call('accKembali', { no: b.dataset.tlk, setuju: false, alasan: al }); toast('Pengembalian ditolak.', 'ok'); reload(); }).catch(() => {}); }));
+    }
+    if (tab === 'perpanjang') {
+      B.innerHTML = '<p class="small muted">Perpanjangan tidak dapat disetujui jika buku sedang dibooking anggota lain, agar bisa bergantian.</p>' + (d.panjangAcc.length ? d.panjangAcc.map(x =>
+        '<div class="card"><b>' + esc(x.judul) + '</b><div class="small muted">' + esc(x.barcode) + ' · ' + esc(x.nama) + ' (' + esc(x.nim) + ') · perpanjangan ke-' + x.ke + '</div>' +
+        '<div class="row" style="margin-top:6px"><span class="badge">Tempo ' + esc(x.tempo) + ' → ' + esc(x.tempoBaru) + '</span></div>' +
+        (x.halangan ? '<div class="alert bad">' + esc(x.halangan) + '</div>' : '') +
+        '<div class="row" style="margin-top:10px">' + (x.halangan ? '' : '<button class="btn grow" data-acx="' + esc(x.no) + '">ACC perpanjang</button>') + '<button class="btn danger grow" data-tlx="' + esc(x.no) + '">Tolak</button></div></div>').join('') : empty('Tidak ada perpanjangan yang menunggu ACC.'));
+      $$('[data-acx]').forEach(b => b.onclick = () => busy(b, async () => { const r = await call('accPerpanjang', { no: b.dataset.acx, setuju: true }); toast(r.status === 'Disetujui' ? 'Diperpanjang sampai ' + r.tempo : 'Ditolak otomatis: ' + r.alasan, r.status === 'Disetujui' ? 'ok' : 'bad'); reload(); }).catch(() => {}));
+      $$('[data-tlx]').forEach(b => {
+        const x = d.panjangAcc.find(y => y.no === b.dataset.tlx);
+        b.onclick = () => (x && x.halangan ? Promise.resolve(x.halangan) : askReason('Tolak perpanjangan', 'Contoh: buku sedang dibooking, mohon dikembalikan.', 'Tolak'))
+          .then(al => { if (al) busy(b, async () => { await call('accPerpanjang', { no: b.dataset.tlx, setuju: false, alasan: al }); toast('Perpanjangan ditolak.', 'ok'); reload(); }).catch(() => {}); });
+      });
+    }
+    if (tab === 'jadwal') {
+      const by = {}; d.jadwal.forEach(x => { (by[x.ambil || 'Tanpa tanggal'] = by[x.ambil || 'Tanpa tanggal'] || []).push(x); });
+      B.innerHTML = '<p class="small muted">Semua booking aktif, diurutkan menurut rencana tanggal ambil. Petugas dapat membatalkan booking, misalnya karena buku didahulukan untuk dosen.</p>' +
+        (d.jadwal.length ? Object.keys(by).map(k => '<h3>' + esc(k) + '</h3>' + by[k].map(x => '<div class="card"><b>' + esc(x.judul) + '</b><div class="small muted">' + esc(x.nama) + ' (' + esc(x.nim) + ')' + (x.barcode ? ' · disiapkan ' + esc(x.barcode) : '') + '</div>' +
+          '<div class="row" style="margin-top:6px">' + resLine(Object.assign({}, x, { ambil: '' })) + '<span class="grow"></span><button class="btn sm danger" data-btl="' + esc(x.rid) + '">Batalkan</button></div></div>').join('')).join('') : empty('Belum ada booking aktif.'));
+      $$('[data-btl]').forEach(b => b.onclick = () => askReason('Batalkan booking', 'Alasan dikirim ke mahasiswa. Contoh: buku didahulukan untuk dosen pengampu.', 'Batalkan').then(al => {
+        if (al) busy(b, async () => { const r = await call('batalBooking', { rid: b.dataset.btl, alasan: al }); toast('Booking dibatalkan' + (r.diteruskanKe ? '. Buku diteruskan ke ' + r.diteruskanKe.nama : '.'), 'ok'); reload(); }).catch(() => {});
+      }));
+    }
+    if (tab === 'denda') {
+      const dd = d.denda;
+      B.innerHTML = '<div class="grid2"><div class="tile"><b style="color:var(--bad)">' + esc(dd.totalTeks) + '</b><span>Total denda belum lunas</span></div><div class="tile"><b>' + dd.anggota + '</b><span>Anggota menunggak</span></div>' +
+        '<div class="tile"><b>' + dd.transaksi + '</b><span>Transaksi belum lunas</span></div><div class="tile"><b>' + rp(dd.lunasBulanIni) + '</b><span>Denda lunas bulan ini</span></div></div>' +
+        '<h3>Per anggota</h3>' + (dd.perAnggota.length ? '<div class="card"><table><tr><th>Anggota</th><th>Transaksi</th><th>Total</th></tr>' + dd.perAnggota.map(a => '<tr><td>' + esc(a.nama) + '<div class="small muted">' + esc(a.nim) + '</div></td><td>' + a.jumlah + '</td><td><b>' + rp(a.total) + '</b></td></tr>').join('') + '</table></div>' : empty('Tidak ada tunggakan denda.')) +
+        (dd.daftar.length ? '<h3>Rincian</h3>' + dd.daftar.map(x => '<div class="card row"><div class="grow"><b>' + esc(x.judul) + '</b><div class="small muted">' + esc(x.nama) + ' · ' + esc(x.no) + '</div></div><b style="color:var(--bad)">' + rp(x.denda) + '</b>' +
+          '<button class="btn sm" data-ln="' + esc(x.no) + '">Lunas</button>' + (isAdmin() ? '<button class="btn sm ghost" data-bb="' + esc(x.no) + '">Bebaskan</button>' : '') + '</div>').join('') : '');
+      $$('[data-ln]').forEach(b => b.onclick = () => busy(b, async () => { await call('lunas', { no: b.dataset.ln, mode: 'Lunas' }); toast('Denda ditandai lunas.', 'ok'); reload(); }).catch(() => {}));
+      $$('[data-bb]').forEach(b => b.onclick = () => confirmBox('Bebaskan denda?', 'Denda transaksi ini tidak akan ditagih.', 'Bebaskan').then(y => { if (y) busy(b, async () => { await call('lunas', { no: b.dataset.bb, mode: 'Dibebaskan' }); reload(); }).catch(() => {}); }));
+    }
+  }
+  reload();
+}
+
 function pSirkulasi() {
-  view().innerHTML = back('Peminjaman') + '<div class="card"><label class="f">1. NIM peminjam</label>' + scanField('sNim', 'Ketik / scan NIM', 'numeric') + '</div><div id="sCard"></div><div id="sDone"></div>';
+  view().innerHTML = back('Peminjaman') + '<div class="card"><label class="f">1. NIM peminjam</label>' + scanField('sNim', 'Ketik / scan NIM atau kartu anggota', 'numeric') + '</div><div id="sCard"></div><div id="sDone"></div>';
   let cur = null;
   const load = nim => busy(null, async () => {
     loading($('#sCard'));
     const a = await call('anggota', { nim }); cur = a; renderCard(a);
   }).catch(e => { if ($('#sCard')) $('#sCard').innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
-  function renderCard(a) {
+  function renderCard(a, keepVerif) {
     if (!$('#sCard')) return;
     const ok = !a.alasan.length;
     $('#sCard').innerHTML = '<div class="card"><div class="row"><div class="grow"><b style="font-size:17px">' + esc(a.nama) + '</b><div class="small muted">' + esc(a.nim) + ' · ' + esc(a.prodi || a.jenis) + '</div></div>' +
       '<span class="badge ' + (ok ? 'ok' : 'bad') + '">' + (ok ? 'Boleh meminjam' : 'Diblokir') + '</span></div>' +
+      '<details' + (keepVerif ? '' : ' open') + '><summary style="cursor:pointer;font-weight:600;margin-top:8px">Data identitas</summary>' + identitasHtml(a) + '</details>' +
       (ok ? '' : '<div class="alert bad">' + a.alasan.map(esc).join('<br>') + '</div>') +
-      (a.pesan.length ? '<div class="alert ok"><b>Booking siap diambil:</b><br>' + a.pesan.map(p => esc(p.judul) + ' (' + esc(p.barcode) + ')').join('<br>') + '</div>' : '') +
-      (a.aktif.length ? '<h3>Sedang dipinjam</h3><div class="list">' + a.aktif.map(x => '<div class="row"><div class="grow"><div style="font-weight:600">' + esc(x.judul) + '</div><div class="small muted">' + esc(x.barcode) + ' · tempo ' + esc(x.tempo) + '</div></div>' +
+      (a.pesan.length ? '<h3>Booking</h3><div class="list">' + a.pesan.map(p => '<div class="row"><div class="grow"><b>' + esc(p.judul) + '</b><div class="small muted">' + (p.barcode ? 'disiapkan ' + esc(p.barcode) + ' · ' : '') + 'rencana ambil ' + esc(p.ambil || '-') + '</div></div>' + resLine(Object.assign({}, p, { ambil: '' })) +
+        '<button class="btn sm danger" data-btl="' + esc(p.rid) + '">Batalkan</button></div>').join('') + '</div>' : '') +
+      (a.aktif.length ? '<h3>Sedang dipinjam</h3><div class="list">' + a.aktif.map(x => '<div class="row"><div class="grow"><div style="font-weight:600">' + esc(x.judul) + '</div><div class="small muted">' + esc(x.barcode) + ' · tempo ' + esc(x.tempo) + (x.status !== 'Dipinjam' ? ' · pengembalian diajukan' : '') + '</div></div>' +
         (x.terlambat ? '<span class="badge bad">+' + x.terlambat + ' hr ' + rp(x.denda) + '</span>' : '<button class="btn sm sec" data-pp="' + esc(x.barcode) + '">Perpanjang</button>') + '</div>').join('') + '</div>' : '') +
       (a.denda.length ? '<h3>Denda belum lunas</h3><div class="list">' + a.denda.map(d => '<div class="row"><div class="grow">' + esc(d.judul) + '<div class="small muted">' + esc(d.no) + '</div></div><b style="color:var(--bad)">' + rp(d.denda) + '</b>' +
         '<button class="btn sm" data-ln="' + esc(d.no) + '">Lunas</button>' + (isAdmin() ? '<button class="btn sm ghost" data-bb="' + esc(d.no) + '">Bebaskan</button>' : '') + '</div>').join('') + '</div>' : '') +
-      '<label class="f" style="margin-top:14px">2. Scan buku yang dipinjam</label>' + scanField('sBk', 'Barcode buku') + '</div>';
+      '<div style="margin-top:12px">' + verifBox('sVer', a.wajibVerif) + '</div>' +
+      '<label class="f" style="margin-top:10px">2. Scan buku yang dipinjam</label>' + scanField('sBk', 'Barcode buku') + '</div>';
+    if (keepVerif) $('#sVer').checked = true;
     bindScan('sBk', doLoan, { title: 'Scan buku untuk ' + a.nama, continuous: true, onCode: async code => { const r = await doLoan(code, true); return { msg: r.judul + ' · tempo ' + r.tempo }; } });
     $$('[data-pp]').forEach(b => b.onclick = () => busy(b, async () => { const r = await call('perpanjangPetugas', { nim: a.nim, barcode: b.dataset.pp }); toast('Diperpanjang sampai ' + r.tempo, 'ok'); load(a.nim); }).catch(() => {}));
     $$('[data-ln]').forEach(b => b.onclick = () => busy(b, async () => { await call('lunas', { no: b.dataset.ln, mode: 'Lunas' }); toast('Denda ditandai lunas.', 'ok'); load(a.nim); }).catch(() => {}));
-    $$('[data-bb]').forEach(b => b.onclick = () => { if (confirm('Bebaskan denda ini?')) busy(b, async () => { await call('lunas', { no: b.dataset.bb, mode: 'Dibebaskan' }); toast('Denda dibebaskan.', 'ok'); load(a.nim); }).catch(() => {}); });
-    if (ok) setTimeout(() => $('#sBk') && $('#sBk').focus(), 50);
+    $$('[data-bb]').forEach(b => b.onclick = () => confirmBox('Bebaskan denda?', 'Denda transaksi ini tidak akan ditagih.', 'Bebaskan').then(y => { if (y) busy(b, async () => { await call('lunas', { no: b.dataset.bb, mode: 'Dibebaskan' }); load(a.nim); }).catch(() => {}); }));
+    $$('[data-btl]').forEach(b => b.onclick = () => askReason('Batalkan booking', 'Alasan dikirim ke mahasiswa.', 'Batalkan').then(al => { if (al) busy(b, async () => { await call('batalBooking', { rid: b.dataset.btl, alasan: al }); toast('Booking dibatalkan.', 'ok'); load(a.nim); }).catch(() => {}); }));
   }
   async function doLoan(code, fromScanner) {
     const run = async () => {
-      const r = await call('pinjam', { nim: cur.nim, barcode: code });
+      const v = $('#sVer') && $('#sVer').checked;
+      const r = await call('pinjam', { nim: cur.nim, barcode: code, verif: v });
       $('#sDone').insertAdjacentHTML('afterbegin', '<div class="alert ok">✔ <b>' + esc(r.judul) + '</b> (' + esc(r.barcode) + ') dipinjam ' + esc(r.nama) + '. Kembali paling lambat <b>' + esc(r.tempo) + '</b>.</div>');
       if (!fromScanner) { beep(true); toast('Peminjaman tersimpan.', 'ok'); }
-      cur = await call('anggota', { nim: cur.nim }); renderCard(cur);
+      cur = await call('anggota', { nim: cur.nim }); renderCard(cur, v);
       return r;
     };
     if (fromScanner) return run();
     return busy(null, run).catch(() => {});
   }
-  bindScan('sNim', load, { title: 'Scan NIM / kartu mahasiswa' });
+  bindScan('sNim', load, { title: 'Scan NIM / kartu anggota' });
   setTimeout(() => $('#sNim').focus(), 50);
+}
+
+/* ---------- anggota & kartu ---------- */
+function printKartu(d) {
+  const area = $('#printArea'); area.innerHTML = '';
+  const per = 10;
+  for (let i = 0; i < d.kartu.length; i += per) {
+    const page = document.createElement('div'); page.className = 'kartusheet'; if (i) page.style.breakBefore = 'page';
+    d.kartu.slice(i, i + per).forEach(k => {
+      const el = document.createElement('div'); el.className = 'kartu';
+      el.innerHTML = '<div class="kh"><b>' + esc(d.nama || '') + '</b><span>' + esc(d.instansi || '') + '</span></div><div class="kt">KARTU ANGGOTA</div>' +
+        '<div class="kn">' + esc(k.nama) + '</div><div class="ks">' + esc(k.nim) + ' · ' + esc(k.prodi || k.jenis || '') + (k.angkatan ? ' · ' + esc(k.angkatan) : '') + '</div>' +
+        '<div class="kb"></div><div class="kf">' + (k.berlaku ? 'Berlaku s.d. ' + esc(k.berlaku) : 'Kartu ini milik perpustakaan. Wajib dibawa saat meminjam.') + '</div>';
+      $('.kb', el).appendChild(barcodeSvg(k.nim, { height: 40 }));
+      page.appendChild(el);
+    });
+    area.appendChild(page);
+  }
+  setTimeout(() => window.print(), 300);
+}
+function pAnggota() {
+  view().innerHTML = back('Anggota & kartu') +
+    (isAdmin() ? '<div class="card"><h3 style="margin-top:0">Daftarkan anggota baru</h3><div class="row"><div class="grow"><label class="f">NIM/NIP *</label><input id="nA_nim" inputmode="numeric"></div><div class="grow"><label class="f">Nama lengkap *</label><input id="nA_nama"></div></div>' +
+      '<div class="row"><div class="grow"><label class="f">Prodi/Unit</label><input id="nA_prodi" placeholder="PGMI"></div><div class="grow"><label class="f">Angkatan</label><input id="nA_angkatan" inputmode="numeric"></div></div>' +
+      '<div class="row"><div class="grow"><label class="f">Email (Gmail)</label><input id="nA_email" type="email"></div><div class="grow"><label class="f">No. HP</label><input id="nA_hp" inputmode="tel"></div></div>' +
+      '<div class="row"><div class="grow"><label class="f">Jenis anggota</label><select id="nA_jenis"><option>Mahasiswa</option><option>Dosen</option><option>Tendik</option><option>Umum</option></select></div><div class="grow"><label class="f">Berlaku sampai</label><input id="nA_berlaku" type="date"></div></div>' +
+      '<label class="verif" style="margin-top:10px"><input type="checkbox" id="nA_ver"> <span>Data sudah dicocokkan dengan KTM / kartu pegawai</span></label>' +
+      '<button class="btn block" id="nA_go" style="margin-top:10px">Simpan anggota</button><div id="nA_out"></div></div>' : '') +
+    '<div class="card"><h3 style="margin-top:0">Cetak kartu anggota</h3><label class="f">Daftar NIM (satu per baris)</label><textarea id="kc_nim" rows="3" placeholder="213111001"></textarea>' +
+    '<p class="small muted" style="margin:6px 0">atau pilih berdasarkan prodi / angkatan:</p><div class="row"><input id="kc_prodi" class="grow" placeholder="Prodi, contoh PGMI"><input id="kc_angk" class="grow" placeholder="Angkatan, contoh 2024"></div>' +
+    '<button class="btn block" id="kc_go" style="margin-top:10px">Cetak kartu (10 per A4)</button><p class="small muted">Ukuran kartu 8,6 × 5,4 cm (seukuran KTP). Mahasiswa juga punya kartu digital di menu Akun saya.</p><div id="kc_out"></div></div>';
+  if ($('#nA_go')) $('#nA_go').onclick = () => busy($('#nA_go'), async () => {
+    if (!$('#nA_ver').checked) throw new Error('Centang dulu bahwa data sudah dicocokkan dengan kartu identitas.');
+    const v = k => $('#nA_' + k).value;
+    const r = await call('tambahAnggota', { nim: v('nim'), nama: v('nama'), prodi: v('prodi'), angkatan: v('angkatan'), email: v('email'), hp: v('hp'), jenis: v('jenis'), berlaku: v('berlaku') });
+    beep(true);
+    $('#nA_out').innerHTML = '<div class="alert ok">Tersimpan: <b>' + esc(r.nama) + '</b> (' + esc(r.nim) + '). PIN awal: <b>' + esc(r.pin) + '</b> (6 digit terakhir NIM).</div>';
+    ['nim', 'nama', 'email', 'hp'].forEach(k => $('#nA_' + k).value = ''); $('#nA_ver').checked = false;
+  }).catch(() => {});
+  $('#kc_go').onclick = () => busy($('#kc_go'), async () => {
+    const nims = $('#kc_nim').value.split(/[\s,;]+/).filter(Boolean);
+    if (!nims.length && !$('#kc_prodi').value && !$('#kc_angk').value) throw new Error('Isi daftar NIM, atau prodi / angkatan.');
+    const d = await call('kartuCetak', { nims, prodi: $('#kc_prodi').value.trim(), angkatan: $('#kc_angk').value.trim() });
+    $('#kc_out').innerHTML = '<p class="small">' + d.kartu.length + ' kartu siap dicetak.' + (d.tidakDitemukan.length ? ' Tidak ditemukan: ' + d.tidakDitemukan.map(esc).join(', ') : '') + '</p>';
+    if (!d.kartu.length) throw new Error('Tidak ada anggota yang cocok.');
+    if (!window.JsBarcode) throw new Error('Pustaka barcode gagal dimuat. Periksa internet.');
+    printKartu(d);
+  }).catch(() => {});
+}
+
+/* ---------- jurnal kampus (admin) ---------- */
+function pJurnalAdmin() {
+  view().innerHTML = back('Jurnal kampus') + '<div class="card small">Hubungkan jurnal OJS milik kampus. Aplikasi mengambil daftar artikel lewat OAI-PMH (fitur bawaan OJS) sehingga artikel bisa dicari di menu Katalog > Jurnal kampus. Sinkron otomatis setiap Senin pukul 06.00.</div>' +
+    '<div class="card"><label class="f">Nama jurnal</label><input id="jn" placeholder="Jurnal Pendidikan Guru MI">' +
+    '<label class="f">Alamat jurnal OJS</label><input id="ju" placeholder="https://ejournal.kampus.ac.id/index.php/namajurnal">' +
+    '<p class="small muted" style="margin:6px 0">Bisa alamat satu jurnal, atau seluruh portal: https://ejournal.kampus.ac.id/index.php/index</p>' +
+    '<button class="btn block" id="jAdd">Tambah jurnal</button></div><div id="jList"><div class="loading"><span class="spin"></span></div></div>' +
+    '<button class="btn block" id="jSync">Sinkronkan sekarang</button><div id="jOut"></div>';
+  const show = list => { if (!$('#jList')) return; $('#jList').innerHTML = list.length ? '<div class="card"><table><tr><th>Jurnal</th><th>Artikel</th><th>Sinkron</th></tr>' + list.map(j => '<tr><td><b>' + esc(j.nama) + '</b><div class="small muted">' + esc(j.url) + (j.aktif ? '' : ' · nonaktif') + '</div></td><td>' + j.jumlah + '</td><td class="small">' + esc(j.sinkron || '-') + '</td></tr>').join('') + '</table></div>' : '<div class="card muted small">Belum ada jurnal.</div>'; };
+  call('daftarJurnal').then(show).catch(e => { $('#jList').innerHTML = '<div class="alert bad">' + esc(e.message) + '</div>'; });
+  $('#jAdd').onclick = () => busy($('#jAdd'), async () => { show(await call('tambahJurnal', { nama: $('#jn').value, url: $('#ju').value })); $('#jn').value = ''; $('#ju').value = ''; toast('Jurnal ditambahkan.', 'ok'); }).catch(() => {});
+  $('#jSync').onclick = () => busy($('#jSync'), async () => {
+    $('#jOut').innerHTML = '<div class="alert info">Sedang mengambil artikel. Bisa memakan waktu beberapa menit.</div>';
+    const r = await call('sinkronJurnal');
+    $('#jOut').innerHTML = '<div class="alert ok">' + r.hasil.map(h => '<b>' + esc(h.nama) + '</b>: ' + esc(h.pesan)).join('<br>') + '<br>Total artikel tersimpan: ' + r.total + '</div>';
+    show(await call('daftarJurnal')); KAT = null;
+  }).catch(() => {});
 }
 
 function pKembali() {

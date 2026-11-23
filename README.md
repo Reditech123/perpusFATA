@@ -2,6 +2,17 @@
 
 Aplikasi perpustakaan digital untuk Perpustakaan FATA UIN Raden Mas Said Surakarta: presensi dengan NIM, katalog dengan lokasi rak, akun mahasiswa (NIM + PIN), booking, peminjaman dan pengembalian dengan scanner barcode, cetak label, serta rekap.
 
+**Versi 3.0.** Fitur utamanya:
+
+- Semua transaksi lewat persetujuan (ACC) petugas: booking, peminjaman, pengembalian, dan perpanjangan.
+- Dasbor persetujuan dengan angka notifikasi.
+- Jadwal ambil booking, dan petugas bisa membatalkan booking dengan alasan.
+- Verifikasi identitas saat pinjam.
+- Pendaftaran anggota serta kartu anggota digital dan cetak.
+- Katalog (OPAC) dengan kategori DDC dan rak.
+- Notifikasi Gmail.
+- Integrasi jurnal kampus (OJS/OAI-PMH).
+
 Pembagian kerja:
 
 - **Google Sheets** menyimpan semua data (database).
@@ -92,6 +103,25 @@ Ada **dua isian wajib**:
 
 Kamera live dan zoom 1×–4× lebih andal di alamat GitHub Pages karena halaman tidak berada di dalam bingkai Google. Mode foto dan scanner USB/Bluetooth tetap tersedia sebagai cadangan.
 
+## Memperbarui dari versi 2.0 ke 3.0
+
+1. Tempel `apps-script/Code.gs` versi 3.0 ke editor Apps Script, lalu isi kembali `SPREADSHEET_ID`.
+2. Ganti `index.html` di GitHub dengan versi 3.0, lalu isi kembali `API_URL`.
+3. Jalankan fungsi **setup** sekali. Kolom baru, sheet `Jurnal` dan `Artikel_Jurnal`, serta pengaturan baru akan ditambahkan tanpa menghapus data.
+4. Izinkan akses baru saat diminta ("Menghubungkan ke layanan eksternal"). Akses ini dipakai untuk sinkron jurnal kampus.
+5. Buka **Terapkan > Kelola deployment**, klik ikon pensil, pilih **Versi baru**, lalu klik **Terapkan**.
+
+Pengaturan baru di sheet `Pengaturan`:
+
+| Pengaturan | Bawaan |
+|---|---|
+| Booking perlu ACC petugas | Ya |
+| Perpanjangan perlu ACC petugas | Ya |
+| Jadwal ambil booking paling lambat (hari) | 7 |
+| Wajib verifikasi identitas saat pinjam | Ya |
+
+Email notifikasi dikendalikan oleh pengaturan "Kirim email pengingat". Isi dengan **Ya** untuk mengaktifkannya; kolom Email anggota harus terisi.
+
 ## Memperbarui aplikasi
 
 - **Ubah tampilan (`index.html`):** edit di GitHub lalu commit. GitHub Pages memperbarui otomatis dalam 1–2 menit.
@@ -110,7 +140,9 @@ Kamera live dan zoom 1×–4× lebih andal di alamat GitHub Pages karena halaman
 | "Sheet … tidak ditemukan" / "Kolom … tidak ada" | Nama sheet/kolom diubah, atau setup belum dijalankan | Kembalikan nama, jalankan `setup` |
 | Perubahan Code.gs tidak terasa | Belum membuat versi baru deployment | Kelola deployment > Versi baru |
 | Tanggal bergeser satu hari | Zona waktu proyek bukan Jakarta | Setelan project > Zona waktu |
-| Menu tidak berpindah atau halaman keluar ke Google | Masih memakai kode versi 1.0 | Pakai `index.html` dan `Code.gs` versi 2.0 dari repo ini |
+| Menu tidak berpindah atau halaman keluar ke Google | Masih memakai kode versi 1.0 | Pakai `index.html` dan `Code.gs` terbaru dari repo ini |
+| Halaman GitHub Pages 404 | `index.html` tidak berada di halaman depan repo, atau Pages menunjuk ke folder yang salah | Pastikan `index.html` terlihat langsung di halaman depan repo, lalu di Settings > Pages pilih branch `main` dan folder `/ (root)` |
+| Kolom "Tanggal Ambil" atau "Verifikasi Identitas" tidak ada | Setup belum dijalankan setelah pembaruan | Jalankan `setup` |
 
 ## Kapasitas
 

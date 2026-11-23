@@ -17,11 +17,12 @@ var SPREADSHEET_ID = 'TEMPEL_ID_SPREADSHEET_DI_SINI';
  *  5. Salin URL /exec ke API_URL di index.html, lalu terbitkan index.html di GitHub Pages.
  */
 
-var APP_VERSION = '2.0';
+var APP_VERSION = '3.0';
 
 var SH = {
   BUKU: 'Buku', EKS: 'Eksemplar', RAK: 'Rak', ANG: 'Anggota', PTG: 'Petugas', KUN: 'Kunjungan',
-  PJM: 'Peminjaman', RES: 'Reservasi', LIB: 'Libur', SET: 'Pengaturan', LBL: 'Cetak_Label', LOG: 'Log'
+  PJM: 'Peminjaman', RES: 'Reservasi', LIB: 'Libur', SET: 'Pengaturan', LBL: 'Cetak_Label', LOG: 'Log',
+  JRN: 'Jurnal', ART: 'Artikel_Jurnal'
 };
 
 var SCHEMA = {
@@ -35,11 +36,15 @@ var SCHEMA = {
   Petugas: ['Username', 'Nama', 'PIN', 'Peran', 'Aktif'],
   Kunjungan: ['Waktu', 'Tanggal', 'Hari', 'NIM/NIP', 'Nama', 'Prodi/Unit', 'Keperluan'],
   Peminjaman: ['No. Transaksi', 'NIM/NIP', 'Nama', 'Barcode', 'ID_Buku', 'Judul', 'Tgl Pinjam', 'Jatuh Tempo', 'Tgl Kembali',
-    'Perpanjangan', 'Terlambat (hari)', 'Denda (Rp)', 'Status Denda', 'Status', 'Kondisi Kembali', 'Petugas Pinjam', 'Petugas Kembali'],
-  Reservasi: ['ID Reservasi', 'NIM/NIP', 'Nama', 'ID_Buku', 'Judul', 'Tgl Pesan', 'Status', 'Barcode Disiapkan', 'Batas Ambil'],
+    'Perpanjangan', 'Terlambat (hari)', 'Denda (Rp)', 'Status Denda', 'Status', 'Kondisi Kembali', 'Petugas Pinjam', 'Petugas Kembali',
+    'Verifikasi Identitas', 'Tgl Ajukan Kembali', 'Pengajuan Perpanjang', 'Tgl Ajukan Perpanjang', 'Catatan'],
+  Reservasi: ['ID Reservasi', 'NIM/NIP', 'Nama', 'ID_Buku', 'Judul', 'Tgl Pesan', 'Status', 'Barcode Disiapkan', 'Batas Ambil',
+    'Tanggal Ambil', 'Catatan', 'Diproses Oleh'],
   Libur: ['Tanggal', 'Keterangan'],
   Cetak_Label: ['Barcode (ketik/scan)', 'Judul', 'Kode Label', 'No. Panggil', 'Salinan', 'Status'],
-  Log: ['Waktu', 'Pengguna', 'Aksi', 'Detail']
+  Log: ['Waktu', 'Pengguna', 'Aksi', 'Detail'],
+  Jurnal: ['Nama Jurnal', 'URL OJS', 'Aktif', 'Terakhir Sinkron', 'Jumlah Artikel'],
+  Artikel_Jurnal: ['Jurnal', 'Judul', 'Penulis', 'Tahun', 'Kata Kunci', 'Abstrak', 'URL', 'ID OAI']
 };
 
 // [kunci, label di kolom A sheet Pengaturan, nilai bawaan, keterangan]
@@ -59,7 +64,11 @@ var SETTINGS = [
   ['mandiri', 'Pinjam mandiri oleh mahasiswa (Ya/Tidak)', 'Tidak', 'Ya = mahasiswa boleh scan dan pinjam sendiri lewat aplikasi'],
   ['jeda', 'Jeda presensi ganda (menit)', 60, 'NIM yang sama dalam jeda ini tidak dihitung dua kali'],
   ['minggu', 'Hari Minggu libur (Ya/Tidak)', 'Ya', 'Jatuh tempo digeser jika jatuh pada hari libur'],
-  ['email', 'Kirim email pengingat (Ya/Tidak)', 'Tidak', 'Ya = email H-1 jatuh tempo dan saat terlambat (kuota Gmail 100/hari)']
+  ['email', 'Kirim email pengingat (Ya/Tidak)', 'Tidak', 'Ya = semua email notifikasi: booking, ACC, bukti pinjam/kembali, pengingat H-1 dan terlambat (kuota Gmail 100/hari)'],
+  ['accBooking', 'Booking perlu ACC petugas (Ya/Tidak)', 'Ya', 'Ya = booking mahasiswa menunggu persetujuan petugas'],
+  ['accPanjang', 'Perpanjangan perlu ACC petugas (Ya/Tidak)', 'Ya', 'Ya = perpanjangan mahasiswa menunggu persetujuan petugas'],
+  ['jadwalMaks', 'Jadwal ambil booking paling lambat (hari ke depan)', 7, 'Mahasiswa memilih tanggal ambil dari hari ini sampai sekian hari ke depan'],
+  ['verifikasi', 'Wajib verifikasi identitas saat pinjam (Ya/Tidak)', 'Ya', 'Ya = petugas harus mencentang verifikasi identitas sebelum meminjamkan']
 ];
 
 var HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -177,6 +186,7 @@ function setup() {
 /* ===================== API (dipanggil dari tampilan) ===================== */
 
 function api(action, payload, token) {
+  _settings = null;
   try {
     var a = ACTIONS[action];
     if (!a) throw new Error('Perintah tidak dikenal: ' + action);
@@ -204,6 +214,8 @@ var ACTIONS = {
   cekNim: { run: function (p) { return cekNim_(p.nim); } },
   presensi: { lock: true, run: function (p) { return presensi_(p.nim, p.keperluan); } },
   cari: { run: function (p) { return cari_(p); } },
+  kategori: { run: function () { return kategori_(); } },
+  cariJurnal: { run: function (p) { return cariJurnal_(p); } },
   detail: { run: function (p) { return detailBuku_(p.id); } },
   populer: { run: function () { return populer_(); } },
   login: { run: function (p) { return loginAnggota_(p.nim, p.pin); } },
@@ -212,16 +224,24 @@ var ACTIONS = {
 
   akun: { auth: 'm', run: function (p, s) { return akun_(s.id); } },
   gantiPin: { auth: 'm', lock: true, run: function (p, s) { return gantiPin_(s.id, p.lama, p.baru); } },
-  perpanjang: { auth: 'm', lock: true, run: function (p, s) { return perpanjang_(s.id, p.barcode, 'Mandiri'); } },
-  pesan: { auth: 'm', lock: true, run: function (p, s) { return pesan_(s.id, p.id); } },
+  perpanjang: { auth: 'm', lock: true, run: function (p, s) { return ajukanPerpanjang_(s.id, p.barcode); } },
+  ajukanKembali: { auth: 'm', lock: true, run: function (p, s) { return ajukanKembali_(s.id, p.barcode); } },
+  pesan: { auth: 'm', lock: true, run: function (p, s) { return pesan_(s.id, p.id, p.tanggal); } },
   batalPesan: { auth: 'm', lock: true, run: function (p, s) { return batalPesan_(s.id, p.rid); } },
   pinjamMandiri: { auth: 'm', lock: true, run: function (p, s) {
     if (!isYa_(settings_().mandiri)) throw new Error('Pinjam mandiri belum diaktifkan. Silakan ke meja petugas.');
-    return pinjam_(s.id, p.barcode, 'Mandiri');
+    return ajukanPinjam_(s.id, p.barcode);
   } },
 
   anggota: { auth: 'p', run: function (p) { return kartuAnggota_(p.nim); } },
-  pinjam: { auth: 'p', lock: true, run: function (p, s) { return pinjam_(p.nim, p.barcode, s.user); } },
+  pinjam: { auth: 'p', lock: true, run: function (p, s) { return pinjam_(p.nim, p.barcode, s.user, p.verif); } },
+  persetujuan: { auth: 'p', run: function () { return persetujuan_(); } },
+  ringkas: { auth: 'p', run: function () { return ringkas_(); } },
+  accBooking: { auth: 'p', lock: true, run: function (p, s) { return accBooking_(p.rid, p.setuju, p.alasan, s.user); } },
+  batalBooking: { auth: 'p', lock: true, run: function (p, s) { return batalBookingPetugas_(p.rid, p.alasan, s.user); } },
+  accPinjam: { auth: 'p', lock: true, run: function (p, s) { return accPinjam_(p.no, p.setuju, p.verif, p.alasan, s.user); } },
+  accKembali: { auth: 'p', lock: true, run: function (p, s) { return accKembali_(p.no, p.setuju, p.kondisi, p.alasan, s.user); } },
+  accPerpanjang: { auth: 'p', lock: true, run: function (p, s) { return accPerpanjang_(p.no, p.setuju, p.alasan, s.user); } },
   kembali: { auth: 'p', lock: true, run: function (p, s) { return kembali_(p.barcode, p.kondisi, s.user); } },
   perpanjangPetugas: { auth: 'p', lock: true, run: function (p, s) { return perpanjang_(p.nim, p.barcode, s.user); } },
   lunas: { auth: 'p', lock: true, run: function (p, s) { return lunas_(p.no, p.mode, s); } },
@@ -236,7 +256,12 @@ var ACTIONS = {
   labelData: { auth: 'p', run: function (p) { return labelData_(p.barcodes || []); } },
   rekap: { auth: 'p', run: function (p) { return rekap_(p); } },
   resetPin: { auth: 'admin', lock: true, run: function (p, s) { return resetPin_(p.nim, s.user); } },
-  gantiPinPetugas: { auth: 'p', lock: true, run: function (p, s) { return gantiPinPetugas_(s.user, p.lama, p.baru); } }
+  gantiPinPetugas: { auth: 'p', lock: true, run: function (p, s) { return gantiPinPetugas_(s.user, p.lama, p.baru); } },
+  tambahAnggota: { auth: 'admin', lock: true, run: function (p, s) { return tambahAnggota_(p, s.user); } },
+  kartuCetak: { auth: 'p', run: function (p) { return kartuCetak_(p); } },
+  daftarJurnal: { auth: 'p', run: function () { return daftarJurnal_(); } },
+  tambahJurnal: { auth: 'admin', lock: true, run: function (p, s) { return tambahJurnal_(p, s.user); } },
+  sinkronJurnal: { auth: 'admin', lock: true, run: function (p, s) { return sinkronJurnal_(s.user); } }
 };
 
 /* ===================== Utilitas ===================== */
@@ -324,7 +349,7 @@ function settings_() {
   if (sh && sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().forEach(function (r) { map[s_(r[0])] = r[1]; });
   var out = {};
   SETTINGS.forEach(function (s) { var v = map[s[1]]; out[s[0]] = (v === '' || v === undefined || v === null) ? s[2] : v; });
-  ['lama', 'maks', 'maksPanjang', 'denda', 'batasDenda', 'batasAmbil', 'nomor', 'maksPesan', 'jeda'].forEach(function (k) { out[k] = Number(out[k]) || 0; });
+  ['lama', 'maks', 'maksPanjang', 'denda', 'batasDenda', 'batasAmbil', 'nomor', 'maksPesan', 'jeda', 'jadwalMaks'].forEach(function (k) { out[k] = Number(out[k]) || 0; });
   _settings = out;
   return out;
 }
@@ -370,6 +395,12 @@ function holiday_() {
   try { tbl_(SH.LIB).rows.forEach(function (r) { var d = dstr_(r[0]); if (d) set[d] = true; }); } catch (e) { /* opsional */ }
   return set;
 }
+// Hari buka terdekat mulai tanggal str (melewati Minggu bila diatur, dan tanggal di sheet Libur).
+function hariBuka_(str) {
+  var s = settings_(), lib = holiday_(), d = str, g = 0;
+  while ((lib[d] || (isYa_(s.minggu) && dow_(d) === 0)) && g++ < 60) d = addDays_(d, 1);
+  return d;
+}
 function jatuhTempo_(fromStr, days) {
   var s = settings_(), lib = holiday_();
   var d = addDays_(fromStr, days), guard = 0;
@@ -381,12 +412,14 @@ function jatuhTempo_(fromStr, days) {
 
 function member_(t, nim) {
   var i = t.find('NIM/NIP', nim);
-  if (i < 0) return null;
+  return i < 0 ? null : memRow_(t, i);
+}
+function memRow_(t, i) {
   var r = t.rows[i];
   return {
-    i: i, nim: norm_(t.g(r, 'NIM/NIP')), nama: s_(t.g(r, 'Nama')), prodi: s_(t.g(r, 'Prodi/Unit')),
-    jenis: s_(t.g(r, 'Jenis Anggota')) || 'Mahasiswa', status: s_(t.g(r, 'Status')) || 'Aktif',
-    berlaku: dstr_(t.g(r, 'Berlaku Sampai')), email: s_(t.g(r, 'Email')), pin: s_(t.g(r, 'PIN (terenkripsi)'))
+    i: i, nim: norm_(t.g(r, 'NIM/NIP')), nama: s_(t.g(r, 'Nama')), prodi: s_(t.g(r, 'Prodi/Unit')), angkatan: s_(t.g(r, 'Angkatan')),
+    hp: s_(t.g(r, 'No. HP')), jenis: s_(t.g(r, 'Jenis Anggota')) || 'Mahasiswa', status: s_(t.g(r, 'Status')) || 'Aktif',
+    berlaku: dstr_(t.g(r, 'Berlaku Sampai')), terdaftar: dstr_(t.g(r, 'Tanggal Daftar')), email: s_(t.g(r, 'Email')), pin: s_(t.g(r, 'PIN (terenkripsi)'))
   };
 }
 function defaultPin_(nim) { var d = String(nim).replace(/\D/g, ''); return d.slice(-6); }
@@ -516,27 +549,52 @@ function bukuObj_(b, r, st) {
 function cari_(p) {
   var q = s_(p.q).toLowerCase();
   var terms = q.split(/\s+/).filter(function (x) { return x; });
-  if (!terms.length) throw new Error('Ketik judul, pengarang, subjek, atau ISBN.');
+  var kat = s_(p.kategori), rak = s_(p.rak).toUpperCase(), field = s_(p.field) || 'semua';
+  if (!terms.length && !kat && !rak) throw new Error('Ketik kata kunci, atau pilih kategori / rak.');
   var b = tbl_(SH.BUKU), st = stokMap_(tbl_(SH.EKS));
-  var cols = ['ID_Buku', 'Judul', 'Pengarang', 'Subjek', 'ISBN', 'No. Panggil', 'Penerbit'].filter(function (h) { return h in b.idx; }).map(function (h) { return b.idx[h]; });
-  var cJ = b.c('Judul'), cK = b.idx['Jenis Koleksi'];
+  var FIELDS = { semua: ['ID_Buku', 'Judul', 'Pengarang', 'Subjek', 'ISBN', 'No. Panggil', 'Penerbit'], judul: ['Judul'],
+    pengarang: ['Pengarang'], subjek: ['Subjek', 'Judul'], isbn: ['ISBN'], call: ['No. Panggil'] };
+  var cols = (FIELDS[field] || FIELDS.semua).filter(function (h) { return h in b.idx; }).map(function (h) { return b.idx[h]; });
+  var cJ = b.c('Judul'), cK = b.idx['Jenis Koleksi'], cD = b.idx['Kelas DDC'], cId = b.c('ID_Buku');
   var qDigits = q.replace(/[^0-9x]/g, '');
   var hits = [];
   b.rows.forEach(function (r) {
     if (p.jenis && cK !== undefined && s_(r[cK]) !== p.jenis) return;
-    var hay = cols.map(function (c) { return s_(r[c]); }).join(' | ').toLowerCase();
-    var ok = terms.every(function (t) { return hay.indexOf(t) >= 0; });
-    if (!ok && qDigits.length >= 10 && s_(r[b.idx['ISBN']]).toLowerCase() === qDigits) ok = true;
-    if (!ok) return;
-    var id = s_(r[b.c('ID_Buku')]), s = st[id];
+    if (kat && cD !== undefined && s_(r[cD]) !== kat) return;
+    var id = s_(r[cId]), s = st[id];
+    if (rak && !(s && (rak in s.rak))) return;
     if (p.tersedia && !(s && s.tersedia > 0)) return;
-    var judul = s_(r[cJ]).toLowerCase(), score = 0;
-    if (judul.indexOf(q) === 0) score += 3; else if (judul.indexOf(q) >= 0) score += 2;
+    var score = 0;
+    if (terms.length) {
+      var hay = cols.map(function (c) { return s_(r[c]); }).join(' | ').toLowerCase();
+      var ok = terms.every(function (t) { return hay.indexOf(t) >= 0; });
+      if (!ok && qDigits.length >= 10 && s_(r[b.idx['ISBN']]).toLowerCase() === qDigits) ok = true;
+      if (!ok) return;
+      var judul = s_(r[cJ]).toLowerCase();
+      if (judul.indexOf(q) === 0) score += 3; else if (judul.indexOf(q) >= 0) score += 2;
+    }
     if (s && s.tersedia) score += 1;
-    hits.push({ score: score, r: r, id: id });
+    hits.push({ score: score, r: r, id: id, j: s_(r[cJ]) });
   });
-  hits.sort(function (a, c) { return c.score - a.score; });
+  hits.sort(function (a, c) { return c.score - a.score || (a.j < c.j ? -1 : a.j > c.j ? 1 : 0); });
   return { jumlah: hits.length, hasil: hits.slice(0, 60).map(function (h) { return bukuObj_(b, h.r, st[h.id]); }) };
+}
+
+// Daftar kategori (kelas DDC) dan rak untuk menu jelajah katalog.
+function kategori_() {
+  var b = tbl_(SH.BUKU), cD = b.idx['Kelas DDC'], cnt = {};
+  if (cD !== undefined) b.rows.forEach(function (r) { var k = s_(r[cD]); if (k) cnt[k] = (cnt[k] || 0) + 1; });
+  var kat = Object.keys(cnt).sort().map(function (k) { return { kode: k, jumlah: cnt[k] }; });
+  var rak = [];
+  try {
+    var rt = tbl_(SH.RAK);
+    rak = rt.rows.filter(function (x) { return s_(rt.g(x, 'Kode Rak')); }).map(function (x) {
+      return { kode: s_(rt.g(x, 'Kode Rak')).toUpperCase(), lokasi: s_(rt.g(x, 'Ruang/Lokasi')), kelas: s_(rt.g(x, 'Kelas DDC Disimpan')) };
+    });
+  } catch (e) { /* rak opsional */ }
+  var jurnal = 0;
+  try { jurnal = Math.max(0, ss_().getSheetByName(SH.ART).getLastRow() - 1); } catch (e) { /* belum ada */ }
+  return { kategori: kat, rak: rak, artikelJurnal: jurnal };
 }
 
 function detailBuku_(id) {
@@ -544,7 +602,7 @@ function detailBuku_(id) {
   if (i < 0) throw new Error('Buku tidak ditemukan.');
   var e = tbl_(SH.EKS), pj = tbl_(SH.PJM), rs = tbl_(SH.RES);
   var due = {};
-  pj.rows.forEach(function (r) { if (s_(pj.g(r, 'Status')) === 'Dipinjam') due[norm_(pj.g(r, 'Barcode'))] = dstr_(pj.g(r, 'Jatuh Tempo')); });
+  pj.rows.forEach(function (r) { if (/^(Dipinjam|Menunggu ACC kembali)$/.test(s_(pj.g(r, 'Status')))) due[norm_(pj.g(r, 'Barcode'))] = dstr_(pj.g(r, 'Jatuh Tempo')); });
   var eks = [];
   e.rows.forEach(function (r) {
     if (s_(e.g(r, 'ID_Buku')) !== s_(id)) return;
@@ -554,10 +612,12 @@ function detailBuku_(id) {
     eks.push({ barcode: bc, salinan: s_(e.g(r, 'Salinan')), rak: s_(e.g(r, 'Lokasi Rak')), status: st,
       kondisi: s_(e.g(r, 'Kondisi')), kembali: due[bc] ? tglIndo_(due[bc]) : '' });
   });
-  var antre = rs.rows.filter(function (r) { return s_(rs.g(r, 'ID_Buku')) === s_(id) && /Menunggu|Siap diambil/.test(s_(rs.g(r, 'Status'))); }).length;
+  var antre = rs.rows.filter(function (r) { return s_(rs.g(r, 'ID_Buku')) === s_(id) && aktifRes_(s_(rs.g(r, 'Status'))); }).length;
   var o = bukuObj_(b, b.rows[i], stokMap_(e)[s_(id)]);
   o.kota = s_(b.g(b.rows[i], 'Kota Terbit')); o.edisi = s_(b.g(b.rows[i], 'Edisi/Cetakan')); o.kolasi = s_(b.g(b.rows[i], 'Kolasi'));
   o.bahasa = s_(b.g(b.rows[i], 'Bahasa')); o.eksemplar = eks; o.antrean = antre;
+  var s = settings_();
+  o.jadwalMaks = s.jadwalMaks; o.accBooking = isYa_(s.accBooking); o.ambilAwal = hariBuka_(todayStr_()); o.hariIni = todayStr_();
   try {
     var ab = ss_().getSheetByName('Abstrak');
     if (ab) {
@@ -571,7 +631,7 @@ function detailBuku_(id) {
 function populer_() {
   var pj = tbl_(SH.PJM), from = addDays_(todayStr_(), -365), cnt = {}, jud = {};
   pj.rows.forEach(function (r) {
-    if (dstr_(pj.g(r, 'Tgl Pinjam')) < from) return;
+    if (!dstr_(pj.g(r, 'Tgl Pinjam')) || dstr_(pj.g(r, 'Tgl Pinjam')) < from) return;
     var id = s_(pj.g(r, 'ID_Buku')); if (!id) return;
     cnt[id] = (cnt[id] || 0) + 1; jud[id] = s_(pj.g(r, 'Judul'));
   });
@@ -579,16 +639,47 @@ function populer_() {
     .map(function (id) { return { id: id, judul: jud[id], kali: cnt[id] }; });
 }
 
+/* ===================== Status & notifikasi ===================== */
+
+// Reservasi: Menunggu ACC -> (ACC) -> Antre / Siap diambil -> Selesai.  Lainnya: Ditolak, Dibatalkan, Dibatalkan petugas, Kedaluwarsa.
+function aktifRes_(st) { return /^(Menunggu ACC|Antre|Menunggu|Siap diambil)$/.test(st); }
+function antreRes_(st) { return /^(Antre|Menunggu)$/.test(st); }
+function inginRes_(st) { return /^(Menunggu ACC|Antre|Menunggu)$/.test(st); }
+// Peminjaman: Menunggu ACC -> Dipinjam -> (Menunggu ACC kembali) -> Kembali.  Lainnya: Ditolak, Hilang.
+function pegangPj_(st) { return /^(Dipinjam|Menunggu ACC kembali)$/.test(st); }
+
+function kirim_(m, subjek, isi) {
+  try {
+    var s = settings_();
+    if (!isYa_(s.email) || !m || !/@/.test(s_(m.email))) return false;
+    if (MailApp.getRemainingDailyQuota() < 1) return false;
+    MailApp.sendEmail(s_(m.email), subjek + ' - ' + s.nama, 'Halo ' + m.nama + ',\n\n' + isi +
+      '\n\nSalam,\n' + s.nama + ' ' + s.instansi + '\n(Email otomatis dari aplikasi perpustakaan, mohon tidak dibalas.)');
+    return true;
+  } catch (e) { return false; }
+}
+function anggotaByNim_(nim) { return member_(tbl_(SH.ANG), norm_(nim)); }
+
 /* ===================== Akun mahasiswa ===================== */
 
 function pinjamanAktif_(pj, nim) {
   var today = todayStr_(), s = settings_(), out = [];
   pj.rows.forEach(function (r, i) {
-    if (norm_(pj.g(r, 'NIM/NIP')) !== nim || s_(pj.g(r, 'Status')) !== 'Dipinjam') return;
+    var st = s_(pj.g(r, 'Status'));
+    if (norm_(pj.g(r, 'NIM/NIP')) !== nim || !pegangPj_(st)) return;
     var due = dstr_(pj.g(r, 'Jatuh Tempo')), late = Math.max(0, diffDays_(due, today));
     out.push({ i: i, no: s_(pj.g(r, 'No. Transaksi')), barcode: norm_(pj.g(r, 'Barcode')), id: s_(pj.g(r, 'ID_Buku')),
       judul: s_(pj.g(r, 'Judul')), pinjam: tglIndo_(dstr_(pj.g(r, 'Tgl Pinjam'))), tempo: tglIndo_(due), tempoIso: due,
-      terlambat: late, denda: late * s.denda, panjang: Number(pj.g(r, 'Perpanjangan')) || 0 });
+      terlambat: late, denda: late * s.denda, panjang: Number(pj.g(r, 'Perpanjangan')) || 0, status: st,
+      ajuPanjang: s_(pj.g(r, 'Pengajuan Perpanjang')), catatan: s_(pj.g(r, 'Catatan')) });
+  });
+  return out;
+}
+function pengajuanPinjam_(pj, nim) {
+  var out = [];
+  pj.rows.forEach(function (r) {
+    if (norm_(pj.g(r, 'NIM/NIP')) === nim && s_(pj.g(r, 'Status')) === 'Menunggu ACC')
+      out.push({ no: s_(pj.g(r, 'No. Transaksi')), barcode: norm_(pj.g(r, 'Barcode')), judul: s_(pj.g(r, 'Judul')) });
   });
   return out;
 }
@@ -602,6 +693,16 @@ function dendaBelumLunas_(pj, nim) {
   return list;
 }
 
+function resObj_(rs, r) {
+  var st = s_(rs.g(r, 'Status'));
+  return { rid: s_(rs.g(r, 'ID Reservasi')), id: s_(rs.g(r, 'ID_Buku')), judul: s_(rs.g(r, 'Judul')), status: st === 'Menunggu' ? 'Antre' : st,
+    nim: norm_(rs.g(r, 'NIM/NIP')), nama: s_(rs.g(r, 'Nama')),
+    ambil: tglIndo_(dstr_(rs.g(r, 'Tanggal Ambil'))), ambilIso: dstr_(rs.g(r, 'Tanggal Ambil')),
+    batas: tglIndo_(dstr_(rs.g(r, 'Batas Ambil'))), barcode: norm_(rs.g(r, 'Barcode Disiapkan')),
+    pesan: rs.g(r, 'Tgl Pesan') instanceof Date ? fmt_(rs.g(r, 'Tgl Pesan'), 'dd/MM HH:mm') : '',
+    catatan: s_(rs.g(r, 'Catatan')), urutan: antreRes_(st) ? antreanKe_(rs, r) : 0 };
+}
+
 function akun_(nim) {
   var m = member_(tbl_(SH.ANG), nim);
   if (!m) throw new Error('SESI_HABIS');
@@ -610,17 +711,20 @@ function akun_(nim) {
   var riwayat = [], totalPinjam = 0;
   pj.rows.forEach(function (r) {
     if (norm_(pj.g(r, 'NIM/NIP')) !== nim) return;
+    var st = s_(pj.g(r, 'Status'));
+    if (st === 'Ditolak' || st === 'Menunggu ACC') return;
     totalPinjam++;
-    if (s_(pj.g(r, 'Status')) === 'Kembali') riwayat.push({ judul: s_(pj.g(r, 'Judul')), pinjam: tglIndo_(dstr_(pj.g(r, 'Tgl Pinjam'))),
+    if (st === 'Kembali') riwayat.push({ judul: s_(pj.g(r, 'Judul')), pinjam: tglIndo_(dstr_(pj.g(r, 'Tgl Pinjam'))),
       kembali: tglIndo_(dstr_(pj.g(r, 'Tgl Kembali'))), denda: Number(pj.g(r, 'Denda (Rp)')) || 0, statusDenda: s_(pj.g(r, 'Status Denda')) });
   });
-  var pesan = [];
+  var pesan = [], lewat = addDays_(today, -30);
   rs.rows.forEach(function (r) {
     if (norm_(rs.g(r, 'NIM/NIP')) !== nim) return;
     var st = s_(rs.g(r, 'Status'));
-    if (!/Menunggu|Siap diambil/.test(st)) return;
-    pesan.push({ rid: s_(rs.g(r, 'ID Reservasi')), id: s_(rs.g(r, 'ID_Buku')), judul: s_(rs.g(r, 'Judul')), status: st,
-      batas: tglIndo_(dstr_(rs.g(r, 'Batas Ambil'))), urutan: st === 'Menunggu' ? antreanKe_(rs, r) : 0 });
+    if (aktifRes_(st)) pesan.push(resObj_(rs, r));
+    else if (/Ditolak|Dibatalkan petugas|Kedaluwarsa/.test(st) && rs.g(r, 'Tgl Pesan') instanceof Date && dstr_(rs.g(r, 'Tgl Pesan')) >= lewat) {
+      var o = resObj_(rs, r); o.selesai = true; pesan.push(o);
+    }
   });
   var kunj = 0, kunjBulan = 0, terakhir = '';
   kn.rows.forEach(function (r) {
@@ -632,16 +736,20 @@ function akun_(nim) {
   var denda = dendaBelumLunas_(pj, nim);
   var totalDenda = denda.reduce(function (a, x) { return a + x.denda; }, 0) + aktif.reduce(function (a, x) { return a + x.denda; }, 0);
   aktif.forEach(function (x) {
-    var waiting = rs.rows.some(function (r) { return s_(rs.g(r, 'ID_Buku')) === x.id && s_(rs.g(r, 'Status')) === 'Menunggu'; });
-    x.bisaPanjang = !x.terlambat && x.panjang < s.maksPanjang && !waiting;
-    x.alasan = x.terlambat ? 'Sudah terlambat' : x.panjang >= s.maksPanjang ? 'Batas perpanjangan habis' : waiting ? 'Ada yang mengantre' : '';
+    var booked = rs.rows.some(function (r) { return s_(rs.g(r, 'ID_Buku')) === x.id && inginRes_(s_(rs.g(r, 'Status'))); });
+    x.bisaPanjang = x.status === 'Dipinjam' && !x.terlambat && x.panjang < s.maksPanjang && !booked && x.ajuPanjang !== 'Menunggu ACC';
+    x.alasan = x.status !== 'Dipinjam' ? 'Pengembalian menunggu ACC petugas' : x.ajuPanjang === 'Menunggu ACC' ? 'Perpanjangan menunggu ACC petugas' :
+      x.terlambat ? 'Sudah terlambat' : x.panjang >= s.maksPanjang ? 'Batas perpanjangan habis' : booked ? 'Sedang dibooking anggota lain' : '';
     delete x.i;
   });
   return {
-    profil: { nim: m.nim, nama: m.nama, prodi: m.prodi, jenis: m.jenis, status: m.status, berlaku: tglIndo_(m.berlaku), pinDefault: !m.pin },
-    aktif: aktif, riwayat: riwayat.reverse().slice(0, 30), pesan: pesan, denda: denda,
+    profil: { nim: m.nim, nama: m.nama, prodi: m.prodi, jenis: m.jenis, status: m.status, berlaku: tglIndo_(m.berlaku), pinDefault: !m.pin,
+      email: m.email, angkatan: m.angkatan },
+    aktif: aktif, pengajuan: pengajuanPinjam_(pj, nim), riwayat: riwayat.reverse().slice(0, 30), pesan: pesan, denda: denda,
     statistik: { kunjungan: kunj, kunjunganBulanIni: kunjBulan, terakhir: tglIndo_(terakhir), totalPinjam: totalPinjam, totalDenda: totalDenda },
-    aturan: { lama: s.lama, maks: s.maks, maksPanjang: s.maksPanjang, denda: s.denda, mandiri: isYa_(s.mandiri), maksPesan: s.maksPesan }
+    aturan: { lama: s.lama, maks: s.maks, maksPanjang: s.maksPanjang, denda: s.denda, mandiri: isYa_(s.mandiri), maksPesan: s.maksPesan,
+      accPanjang: isYa_(s.accPanjang), accBooking: isYa_(s.accBooking), jadwalMaks: s.jadwalMaks },
+    instansi: s.instansi, perpustakaan: s.nama
   };
 }
 
@@ -649,14 +757,14 @@ function antreanKe_(rs, row) {
   var id = s_(rs.g(row, 'ID_Buku')), mine = s_(rs.g(row, 'ID Reservasi')), n = 0;
   for (var i = 0; i < rs.rows.length; i++) {
     var r = rs.rows[i];
-    if (s_(rs.g(r, 'ID_Buku')) === id && s_(rs.g(r, 'Status')) === 'Menunggu') { n++; if (s_(rs.g(r, 'ID Reservasi')) === mine) return n; }
+    if (s_(rs.g(r, 'ID_Buku')) === id && antreRes_(s_(rs.g(r, 'Status')))) { n++; if (s_(rs.g(r, 'ID Reservasi')) === mine) return n; }
   }
   return n;
 }
 
 /* ===================== Sirkulasi ===================== */
 
-function kelayakan_(m, pj) {
+function kelayakan_(m, pj, abaikanNo) {
   var s = settings_(), today = todayStr_(), alasan = [];
   if (!m) return ['NIM tidak terdaftar'];
   if (!/^aktif$/i.test(m.status)) alasan.push('Status anggota: ' + m.status);
@@ -666,20 +774,28 @@ function kelayakan_(m, pj) {
   if (telat.length) alasan.push(telat.length + ' buku terlambat dikembalikan');
   var denda = dendaBelumLunas_(pj, m.nim).reduce(function (a, x) { return a + x.denda; }, 0);
   if (s.batasDenda > 0 && denda >= s.batasDenda) alasan.push('Denda belum lunas ' + rupiah_(denda));
-  if (aktif.length >= s.maks) alasan.push('Sudah meminjam ' + aktif.length + ' dari maksimal ' + s.maks + ' buku');
+  var jumlah = aktif.length + pengajuanPinjam_(pj, m.nim).filter(function (x) { return x.no !== abaikanNo; }).length;
+  if (jumlah >= s.maks) alasan.push('Sudah meminjam/mengajukan ' + jumlah + ' dari maksimal ' + s.maks + ' buku');
   return alasan;
+}
+
+function identitas_(m) {
+  return { nim: m.nim, nama: m.nama, prodi: m.prodi, jenis: m.jenis, status: m.status, email: m.email, hp: m.hp,
+    angkatan: m.angkatan, berlaku: tglIndo_(m.berlaku), terdaftar: tglIndo_(m.terdaftar) };
 }
 
 function kartuAnggota_(nim) {
   nim = cleanNim_(nim);
   var m = member_(tbl_(SH.ANG), nim);
-  if (!m) throw new Error('NIM ' + nim + ' belum terdaftar. Tambahkan dulu di sheet Anggota.');
+  if (!m) throw new Error('NIM ' + nim + ' belum terdaftar. Tambahkan dulu lewat menu Anggota atau sheet Anggota.');
   var pj = tbl_(SH.PJM), rs = tbl_(SH.RES);
-  var pesan = rs.rows.filter(function (r) { return norm_(rs.g(r, 'NIM/NIP')) === nim && s_(rs.g(r, 'Status')) === 'Siap diambil'; })
-    .map(function (r) { return { judul: s_(rs.g(r, 'Judul')), barcode: norm_(rs.g(r, 'Barcode Disiapkan')), batas: tglIndo_(dstr_(rs.g(r, 'Batas Ambil'))) }; });
+  var pesan = rs.rows.filter(function (r) { return norm_(rs.g(r, 'NIM/NIP')) === nim && aktifRes_(s_(rs.g(r, 'Status'))); })
+    .map(function (r) { return resObj_(rs, r); });
   var aktif = pinjamanAktif_(pj, nim); aktif.forEach(function (x) { delete x.i; });
-  return { nim: m.nim, nama: m.nama, prodi: m.prodi, jenis: m.jenis, status: m.status, alasan: kelayakan_(m, pj),
-    aktif: aktif, denda: dendaBelumLunas_(pj, nim), pesan: pesan };
+  var o = identitas_(m);
+  o.alasan = kelayakan_(m, pj); o.aktif = aktif; o.denda = dendaBelumLunas_(pj, nim); o.pesan = pesan;
+  o.pengajuan = pengajuanPinjam_(pj, nim); o.wajibVerif = isYa_(settings_().verifikasi);
+  return o;
 }
 
 function noTransaksi_(pj, prefix, col) {
@@ -688,19 +804,11 @@ function noTransaksi_(pj, prefix, col) {
   return p + ('000' + (n + 1)).slice(-4);
 }
 
-function pinjam_(nim, barcode, petugas) {
-  nim = cleanNim_(nim);
-  var bc = norm_(barcode);
-  if (!bc) throw new Error('Barcode buku belum di-scan.');
-  var ang = tbl_(SH.ANG), m = member_(ang, nim);
-  if (!m) throw new Error('NIM ' + nim + ' belum terdaftar.');
-  var pj = tbl_(SH.PJM), e = tbl_(SH.EKS), rs = tbl_(SH.RES), s = settings_();
-  var alasan = kelayakan_(m, pj);
-  if (alasan.length) throw new Error('Tidak dapat meminjam: ' + alasan.join('; ') + '.');
+// Cek eksemplar bisa dipinjam oleh nim. Mengembalikan {ei, er, hold} atau melempar error.
+function cekEksemplar_(e, rs, bc, nim) {
   var ei = e.find('Barcode', bc);
   if (ei < 0) throw new Error('Barcode ' + bc + ' tidak ditemukan di sheet Eksemplar.');
-  var er = e.rows[ei], st = s_(e.g(er, 'Status')) || 'Tersedia', idb = s_(e.g(er, 'ID_Buku'));
-  var hold = -1;
+  var er = e.rows[ei], st = s_(e.g(er, 'Status')) || 'Tersedia', hold = -1;
   if (st === 'Dipesan') {
     for (var k = 0; k < rs.rows.length; k++) {
       var r = rs.rows[k];
@@ -709,33 +817,121 @@ function pinjam_(nim, barcode, petugas) {
     if (hold < 0 || norm_(rs.g(rs.rows[hold], 'NIM/NIP')) !== nim) throw new Error('Buku ini sedang disiapkan untuk pemesan lain.');
   } else if (st !== 'Tersedia') {
     var pesanStatus = { 'Dipinjam': 'sedang dipinjam. Kembalikan dulu sebelum dipinjam lagi', 'Baca di tempat': 'hanya untuk dibaca di tempat',
-      'Hilang': 'tercatat hilang', 'Dihapus': 'sudah dihapus dari koleksi', 'Perbaikan': 'sedang diperbaiki' };
+      'Hilang': 'tercatat hilang', 'Dihapus': 'sudah dihapus dari koleksi', 'Perbaikan': 'sedang diperbaiki',
+      'Menunggu ACC': 'sedang diajukan pinjam oleh anggota lain dan menunggu ACC petugas' };
     throw new Error('Buku ' + bc + ' ' + (pesanStatus[st] || ('berstatus ' + st)) + '.');
   }
-  var today = todayStr_(), due = jatuhTempo_(today, s.lama), judul = s_(e.g(er, 'Judul'));
-  var no = noTransaksi_(pj, 'PJ');
-  pj.add({ 'No. Transaksi': no, 'NIM/NIP': txt_(nim), 'Nama': m.nama, 'Barcode': txt_(bc), 'ID_Buku': idb, 'Judul': judul,
-    'Tgl Pinjam': new Date(), 'Jatuh Tempo': toDate_(due), 'Perpanjangan': 0, 'Status': 'Dipinjam', 'Petugas Pinjam': petugas });
-  e.set(ei, { 'Status': 'Dipinjam' });
-  if (hold >= 0) rs.set(hold, { 'Status': 'Selesai' });
-  log_(petugas, 'Pinjam', no + ' ' + nim + ' ' + bc);
-  return { no: no, nama: m.nama, judul: judul, barcode: bc, tempo: tglIndo_(due), rak: s_(e.g(er, 'Lokasi Rak')) };
+  return { ei: ei, er: er, hold: hold };
 }
 
+function wajibVerif_(verif) {
+  if (isYa_(settings_().verifikasi) && !verif)
+    throw new Error('Centang dulu "Identitas sudah diverifikasi" setelah mencocokkan nama, NIM, dan foto KTM.');
+}
+
+// Peminjaman langsung di meja petugas (petugas = yang memverifikasi).
+function pinjam_(nim, barcode, petugas, verif) {
+  nim = cleanNim_(nim);
+  var bc = norm_(barcode);
+  if (!bc) throw new Error('Barcode buku belum di-scan.');
+  wajibVerif_(verif);
+  var ang = tbl_(SH.ANG), m = member_(ang, nim);
+  if (!m) throw new Error('NIM ' + nim + ' belum terdaftar.');
+  var pj = tbl_(SH.PJM), e = tbl_(SH.EKS), rs = tbl_(SH.RES), s = settings_();
+  var alasan = kelayakan_(m, pj);
+  if (alasan.length) throw new Error('Tidak dapat meminjam: ' + alasan.join('; ') + '.');
+  var x = cekEksemplar_(e, rs, bc, nim);
+  var today = todayStr_(), due = jatuhTempo_(today, s.lama), judul = s_(e.g(x.er, 'Judul'));
+  var no = noTransaksi_(pj, 'PJ');
+  pj.add({ 'No. Transaksi': no, 'NIM/NIP': txt_(nim), 'Nama': m.nama, 'Barcode': txt_(bc), 'ID_Buku': s_(e.g(x.er, 'ID_Buku')), 'Judul': judul,
+    'Tgl Pinjam': new Date(), 'Jatuh Tempo': toDate_(due), 'Perpanjangan': 0, 'Status': 'Dipinjam', 'Petugas Pinjam': petugas,
+    'Verifikasi Identitas': verif ? 'Ya - ' + petugas : '' });
+  e.set(x.ei, { 'Status': 'Dipinjam' });
+  if (x.hold >= 0) rs.set(x.hold, { 'Status': 'Selesai', 'Diproses Oleh': petugas });
+  log_(petugas, 'Pinjam', no + ' ' + nim + ' ' + bc);
+  kirim_(m, 'Bukti peminjaman buku', 'Anda meminjam:\n- ' + judul + ' (' + bc + ')\n\nJatuh tempo: ' + tglIndo_(due) +
+    '\nDenda keterlambatan ' + rupiah_(s.denda) + ' per buku per hari.');
+  return { no: no, nama: m.nama, judul: judul, barcode: bc, tempo: tglIndo_(due), rak: s_(e.g(x.er, 'Lokasi Rak')) };
+}
+
+// Pinjam mandiri: mahasiswa scan buku, lalu petugas ACC setelah verifikasi identitas.
+function ajukanPinjam_(nim, barcode) {
+  var bc = norm_(barcode);
+  if (!bc) throw new Error('Barcode buku belum di-scan.');
+  var m = member_(tbl_(SH.ANG), nim);
+  if (!m) throw new Error('SESI_HABIS');
+  var pj = tbl_(SH.PJM), e = tbl_(SH.EKS), rs = tbl_(SH.RES);
+  var alasan = kelayakan_(m, pj);
+  if (alasan.length) throw new Error('Tidak dapat mengajukan pinjam: ' + alasan.join('; ') + '.');
+  var x = cekEksemplar_(e, rs, bc, nim);
+  var no = noTransaksi_(pj, 'PJ'), judul = s_(e.g(x.er, 'Judul'));
+  pj.add({ 'No. Transaksi': no, 'NIM/NIP': txt_(nim), 'Nama': m.nama, 'Barcode': txt_(bc), 'ID_Buku': s_(e.g(x.er, 'ID_Buku')), 'Judul': judul,
+    'Perpanjangan': 0, 'Status': 'Menunggu ACC', 'Petugas Pinjam': 'Mandiri', 'Catatan': 'Diajukan ' + fmt_(new Date(), 'dd/MM/yyyy HH:mm') });
+  e.set(x.ei, { 'Status': 'Menunggu ACC' });
+  log_(nim, 'Ajukan pinjam', no + ' ' + bc);
+  return { no: no, judul: judul, barcode: bc };
+}
+
+function accPinjam_(no, setuju, verif, alasan, user) {
+  var pj = tbl_(SH.PJM), i = pj.find('No. Transaksi', no);
+  if (i < 0 || s_(pj.g(pj.rows[i], 'Status')) !== 'Menunggu ACC') throw new Error('Pengajuan pinjam tidak ditemukan atau sudah diproses.');
+  var r = pj.rows[i], nim = norm_(pj.g(r, 'NIM/NIP')), bc = norm_(pj.g(r, 'Barcode')), judul = s_(pj.g(r, 'Judul'));
+  var e = tbl_(SH.EKS), rs = tbl_(SH.RES), ei = e.find('Barcode', bc), m = anggotaByNim_(nim), s = settings_();
+  var hold = -1;
+  for (var k = 0; k < rs.rows.length; k++) {
+    if (norm_(rs.g(rs.rows[k], 'Barcode Disiapkan')) === bc && s_(rs.g(rs.rows[k], 'Status')) === 'Siap diambil' && norm_(rs.g(rs.rows[k], 'NIM/NIP')) === nim) { hold = k; break; }
+  }
+  if (!setuju) {
+    if (!s_(alasan)) throw new Error('Tuliskan alasan penolakan.');
+    pj.set(i, { 'Status': 'Ditolak', 'Catatan': s_(alasan), 'Petugas Pinjam': user });
+    if (ei >= 0) { if (hold >= 0) e.set(ei, { 'Status': 'Dipesan' }); else lepasEksemplar_(e, ei); }
+    log_(user, 'Tolak pinjam', no + ' ' + alasan);
+    kirim_(m, 'Pengajuan pinjam ditolak', 'Pengajuan pinjam "' + judul + '" ditolak petugas.\nAlasan: ' + alasan);
+    return { status: 'Ditolak' };
+  }
+  wajibVerif_(verif);
+  var al = kelayakan_(m, pj, no);
+  if (al.length) throw new Error('Belum bisa disetujui: ' + al.join('; ') + '. Tolak pengajuan ini atau selesaikan masalahnya dulu.');
+  var due = jatuhTempo_(todayStr_(), s.lama);
+  pj.set(i, { 'Status': 'Dipinjam', 'Tgl Pinjam': new Date(), 'Jatuh Tempo': toDate_(due), 'Petugas Pinjam': user,
+    'Verifikasi Identitas': verif ? 'Ya - ' + user : '' });
+  if (ei >= 0) e.set(ei, { 'Status': 'Dipinjam' });
+  if (hold >= 0) rs.set(hold, { 'Status': 'Selesai', 'Diproses Oleh': user });
+  log_(user, 'ACC pinjam', no + ' ' + nim + ' ' + bc);
+  kirim_(m, 'Peminjaman disetujui', 'Peminjaman "' + judul + '" (' + bc + ') sudah disetujui petugas.\nJatuh tempo: ' + tglIndo_(due) + '.');
+  return { status: 'Dipinjam', tempo: tglIndo_(due), judul: judul, nama: m ? m.nama : '' };
+}
+
+// Mahasiswa memberi tahu bahwa buku dikembalikan; petugas memeriksa fisik lalu ACC.
+function ajukanKembali_(nim, barcode) {
+  var bc = norm_(barcode), pj = tbl_(SH.PJM);
+  for (var i = pj.rows.length - 1; i >= 0; i--) {
+    var r = pj.rows[i];
+    if (norm_(pj.g(r, 'Barcode')) === bc && norm_(pj.g(r, 'NIM/NIP')) === nim && s_(pj.g(r, 'Status')) === 'Dipinjam') {
+      pj.set(i, { 'Status': 'Menunggu ACC kembali', 'Tgl Ajukan Kembali': new Date() });
+      log_(nim, 'Ajukan kembali', s_(pj.g(r, 'No. Transaksi')) + ' ' + bc);
+      return { judul: s_(pj.g(r, 'Judul')) };
+    }
+  }
+  throw new Error('Peminjaman aktif untuk buku ini tidak ditemukan.');
+}
+
+// ACC pengembalian oleh petugas (scan buku di meja, atau dari daftar persetujuan).
 function kembali_(barcode, kondisi, petugas) {
   var bc = norm_(barcode);
   if (!bc) throw new Error('Barcode buku belum di-scan.');
   var pj = tbl_(SH.PJM), e = tbl_(SH.EKS), s = settings_();
   var pi = -1;
   for (var i = pj.rows.length - 1; i >= 0; i--) {
-    if (norm_(pj.g(pj.rows[i], 'Barcode')) === bc && s_(pj.g(pj.rows[i], 'Status')) === 'Dipinjam') { pi = i; break; }
+    if (norm_(pj.g(pj.rows[i], 'Barcode')) === bc && pegangPj_(s_(pj.g(pj.rows[i], 'Status')))) { pi = i; break; }
   }
   if (pi < 0) throw new Error('Tidak ada peminjaman aktif untuk barcode ' + bc + '. Periksa apakah buku ini memang dipinjam.');
   var r = pj.rows[pi], today = todayStr_(), due = dstr_(pj.g(r, 'Jatuh Tempo'));
   var late = Math.max(0, diffDays_(due, today)), denda = late * s.denda;
   kondisi = kondisi || 'Baik';
   pj.set(pi, { 'Tgl Kembali': new Date(), 'Terlambat (hari)': late, 'Denda (Rp)': denda, 'Status Denda': denda > 0 ? 'Belum lunas' : '',
-    'Status': 'Kembali', 'Kondisi Kembali': kondisi, 'Petugas Kembali': petugas });
+    'Status': 'Kembali', 'Kondisi Kembali': kondisi, 'Petugas Kembali': petugas,
+    'Pengajuan Perpanjang': s_(pj.g(r, 'Pengajuan Perpanjang')) === 'Menunggu ACC' ? '' : s_(pj.g(r, 'Pengajuan Perpanjang')) });
   var ei = e.find('Barcode', bc), untuk = null;
   if (ei >= 0) {
     if (kondisi === 'Rusak berat') e.set(ei, { 'Status': 'Perbaikan', 'Kondisi': kondisi });
@@ -744,47 +940,117 @@ function kembali_(barcode, kondisi, petugas) {
       untuk = lepasEksemplar_(e, ei);
     }
   }
+  var nim = norm_(pj.g(r, 'NIM/NIP')), judul = s_(pj.g(r, 'Judul'));
   log_(petugas, 'Kembali', s_(pj.g(r, 'No. Transaksi')) + ' ' + bc + (denda ? ' denda ' + denda : ''));
-  return { nama: s_(pj.g(r, 'Nama')), nim: norm_(pj.g(r, 'NIM/NIP')), judul: s_(pj.g(r, 'Judul')), barcode: bc, terlambat: late,
+  kirim_(anggotaByNim_(nim), 'Bukti pengembalian buku', 'Buku "' + judul + '" (' + bc + ') sudah diterima petugas pada ' + tglIndo_(today) + '.' +
+    (denda ? '\nTerlambat ' + late + ' hari. Denda ' + rupiah_(denda) + ', silakan dibayar di meja petugas.' : '\nTerima kasih telah mengembalikan tepat waktu.'));
+  return { nama: s_(pj.g(r, 'Nama')), nim: nim, judul: judul, barcode: bc, terlambat: late,
     denda: denda, dendaTeks: rupiah_(denda), rak: ei >= 0 ? s_(e.g(e.rows[ei], 'Lokasi Rak')) : '', untuk: untuk };
 }
 
-// Eksemplar kembali tersedia: berikan ke antrean booking pertama bila ada.
+function accKembali_(no, setuju, kondisi, alasan, user) {
+  var pj = tbl_(SH.PJM), i = pj.find('No. Transaksi', no);
+  if (i < 0 || s_(pj.g(pj.rows[i], 'Status')) !== 'Menunggu ACC kembali') throw new Error('Pengajuan pengembalian tidak ditemukan atau sudah diproses.');
+  if (setuju) return kembali_(pj.g(pj.rows[i], 'Barcode'), kondisi, user);
+  if (!s_(alasan)) throw new Error('Tuliskan alasan penolakan.');
+  pj.set(i, { 'Status': 'Dipinjam', 'Catatan': 'Pengembalian ditolak: ' + s_(alasan) });
+  log_(user, 'Tolak kembali', no + ' ' + alasan);
+  kirim_(anggotaByNim_(pj.g(pj.rows[i], 'NIM/NIP')), 'Pengembalian belum diterima',
+    'Pengajuan pengembalian "' + s_(pj.g(pj.rows[i], 'Judul')) + '" belum diterima petugas.\nAlasan: ' + alasan + '\nBuku masih tercatat Anda pinjam.');
+  return { status: 'Dipinjam' };
+}
+
+// Eksemplar kembali tersedia: berikan ke antrean booking pertama (yang sudah di-ACC) bila ada.
 function lepasEksemplar_(e, ei) {
-  var rs = tbl_(SH.RES), idb = s_(e.g(e.rows[ei], 'ID_Buku')), s = settings_();
+  var rs = tbl_(SH.RES), idb = s_(e.g(e.rows[ei], 'ID_Buku'));
   for (var k = 0; k < rs.rows.length; k++) {
     var r = rs.rows[k];
-    if (s_(rs.g(r, 'ID_Buku')) === idb && s_(rs.g(r, 'Status')) === 'Menunggu') {
-      var batas = addDays_(todayStr_(), s.batasAmbil);
-      rs.set(k, { 'Status': 'Siap diambil', 'Barcode Disiapkan': txt_(norm_(e.g(e.rows[ei], 'Barcode'))), 'Batas Ambil': toDate_(batas) });
-      e.set(ei, { 'Status': 'Dipesan' });
-      return { nama: s_(rs.g(r, 'Nama')), nim: norm_(rs.g(r, 'NIM/NIP')), batas: tglIndo_(batas) };
-    }
+    if (s_(rs.g(r, 'ID_Buku')) === idb && antreRes_(s_(rs.g(r, 'Status')))) return siapkan_(rs, k, e, ei);
   }
   e.set(ei, { 'Status': 'Tersedia' });
   return null;
 }
 
-function perpanjang_(nim, barcode, oleh) {
-  nim = cleanNim_(nim);
-  var bc = norm_(barcode), pj = tbl_(SH.PJM), rs = tbl_(SH.RES), s = settings_();
-  var pi = -1;
+function siapkan_(rs, k, e, ei) {
+  var s = settings_(), today = todayStr_(), r = rs.rows[k];
+  var ambil = dstr_(rs.g(r, 'Tanggal Ambil'));
+  var mulai = ambil && ambil > today ? ambil : today;
+  var batas = addDays_(mulai, Math.max(0, s.batasAmbil - 1));
+  rs.set(k, { 'Status': 'Siap diambil', 'Barcode Disiapkan': txt_(norm_(e.g(e.rows[ei], 'Barcode'))), 'Batas Ambil': toDate_(batas) });
+  e.set(ei, { 'Status': 'Dipesan' });
+  var m = anggotaByNim_(rs.g(r, 'NIM/NIP'));
+  kirim_(m, 'Buku booking siap diambil', 'Buku "' + s_(rs.g(r, 'Judul')) + '" sudah disiapkan untuk Anda.\nAmbil di meja petugas mulai ' + tglIndo_(mulai) +
+    ' sampai ' + tglIndo_(batas) + '. Lewat dari tanggal itu booking dibatalkan otomatis.');
+  return { nama: s_(rs.g(r, 'Nama')), nim: norm_(rs.g(r, 'NIM/NIP')), batas: tglIndo_(batas), mulai: tglIndo_(mulai), rak: s_(e.g(e.rows[ei], 'Lokasi Rak')) };
+}
+
+function cariPinjam_(pj, nim, barcode) {
   for (var i = pj.rows.length - 1; i >= 0; i--) {
     var r = pj.rows[i];
-    if (norm_(pj.g(r, 'Barcode')) === bc && s_(pj.g(r, 'Status')) === 'Dipinjam' && norm_(pj.g(r, 'NIM/NIP')) === nim) { pi = i; break; }
+    if (norm_(pj.g(r, 'Barcode')) === norm_(barcode) && s_(pj.g(r, 'Status')) === 'Dipinjam' && (!nim || norm_(pj.g(r, 'NIM/NIP')) === nim)) return i;
   }
-  if (pi < 0) throw new Error('Peminjaman tidak ditemukan.');
-  var row = pj.rows[pi], due = dstr_(pj.g(row, 'Jatuh Tempo')), today = todayStr_();
-  var n = Number(pj.g(row, 'Perpanjangan')) || 0;
-  if (diffDays_(due, today) > 0) throw new Error('Buku sudah terlambat. Kembalikan ke perpustakaan dan selesaikan denda.');
-  if (n >= s.maksPanjang) throw new Error('Batas perpanjangan (' + s.maksPanjang + ' kali) sudah habis.');
+  return -1;
+}
+
+function syaratPanjang_(pj, rs, i) {
+  var s = settings_(), row = pj.rows[i], due = dstr_(pj.g(row, 'Jatuh Tempo'));
+  if (diffDays_(due, todayStr_()) > 0) return 'Buku sudah terlambat. Kembalikan ke perpustakaan dan selesaikan denda.';
+  if ((Number(pj.g(row, 'Perpanjangan')) || 0) >= s.maksPanjang) return 'Batas perpanjangan (' + s.maksPanjang + ' kali) sudah habis.';
   var idb = s_(pj.g(row, 'ID_Buku'));
-  if (rs.rows.some(function (r) { return s_(rs.g(r, 'ID_Buku')) === idb && s_(rs.g(r, 'Status')) === 'Menunggu'; }))
-    throw new Error('Tidak bisa diperpanjang karena ada anggota lain yang mengantre buku ini.');
+  if (rs.rows.some(function (r) { return s_(rs.g(r, 'ID_Buku')) === idb && inginRes_(s_(rs.g(r, 'Status'))); }))
+    return 'Tidak bisa diperpanjang karena buku ini sedang dibooking anggota lain. Mohon dikembalikan agar bisa bergantian.';
+  return '';
+}
+
+function perpanjangSekarang_(pj, i, oleh) {
+  var s = settings_(), row = pj.rows[i], due = dstr_(pj.g(row, 'Jatuh Tempo')), n = Number(pj.g(row, 'Perpanjangan')) || 0;
   var baru = jatuhTempo_(due, s.lama);
-  pj.set(pi, { 'Jatuh Tempo': toDate_(baru), 'Perpanjangan': n + 1 });
+  pj.set(i, { 'Jatuh Tempo': toDate_(baru), 'Perpanjangan': n + 1, 'Pengajuan Perpanjang': 'Disetujui' });
   log_(oleh, 'Perpanjang', s_(pj.g(row, 'No. Transaksi')) + ' sampai ' + baru);
-  return { judul: s_(pj.g(row, 'Judul')), tempo: tglIndo_(baru) };
+  kirim_(anggotaByNim_(pj.g(row, 'NIM/NIP')), 'Perpanjangan disetujui', 'Perpanjangan "' + s_(pj.g(row, 'Judul')) + '" disetujui.\nJatuh tempo baru: ' + tglIndo_(baru) + '.');
+  return { judul: s_(pj.g(row, 'Judul')), tempo: tglIndo_(baru), status: 'Disetujui' };
+}
+
+// Mahasiswa mengajukan perpanjangan. Jika pengaturan "perlu ACC" = Ya, menunggu petugas.
+function ajukanPerpanjang_(nim, barcode) {
+  nim = cleanNim_(nim);
+  var pj = tbl_(SH.PJM), rs = tbl_(SH.RES), i = cariPinjam_(pj, nim, barcode);
+  if (i < 0) throw new Error('Peminjaman tidak ditemukan.');
+  if (s_(pj.g(pj.rows[i], 'Pengajuan Perpanjang')) === 'Menunggu ACC') throw new Error('Perpanjangan sudah diajukan dan menunggu ACC petugas.');
+  var al = syaratPanjang_(pj, rs, i);
+  if (al) throw new Error(al);
+  if (!isYa_(settings_().accPanjang)) return perpanjangSekarang_(pj, i, nim);
+  pj.set(i, { 'Pengajuan Perpanjang': 'Menunggu ACC', 'Tgl Ajukan Perpanjang': new Date() });
+  log_(nim, 'Ajukan perpanjang', s_(pj.g(pj.rows[i], 'No. Transaksi')));
+  return { judul: s_(pj.g(pj.rows[i], 'Judul')), status: 'Menunggu ACC' };
+}
+
+// Petugas memperpanjang langsung di meja (tetap mengikuti syarat booking).
+function perpanjang_(nim, barcode, oleh) {
+  nim = cleanNim_(nim);
+  var pj = tbl_(SH.PJM), rs = tbl_(SH.RES), i = cariPinjam_(pj, nim, barcode);
+  if (i < 0) throw new Error('Peminjaman tidak ditemukan.');
+  var al = syaratPanjang_(pj, rs, i);
+  if (al) throw new Error(al);
+  return perpanjangSekarang_(pj, i, oleh);
+}
+
+function accPerpanjang_(no, setuju, alasan, user) {
+  var pj = tbl_(SH.PJM), rs = tbl_(SH.RES), i = pj.find('No. Transaksi', no);
+  if (i < 0 || s_(pj.g(pj.rows[i], 'Pengajuan Perpanjang')) !== 'Menunggu ACC' || s_(pj.g(pj.rows[i], 'Status')) !== 'Dipinjam')
+    throw new Error('Pengajuan perpanjangan tidak ditemukan atau sudah diproses.');
+  var row = pj.rows[i];
+  if (setuju) {
+    var al = syaratPanjang_(pj, rs, i);
+    if (!al) return perpanjangSekarang_(pj, i, user);
+    alasan = al;
+  }
+  if (!s_(alasan)) throw new Error('Tuliskan alasan penolakan.');
+  pj.set(i, { 'Pengajuan Perpanjang': 'Ditolak', 'Catatan': 'Perpanjangan ditolak: ' + s_(alasan) });
+  log_(user, 'Tolak perpanjang', no + ' ' + alasan);
+  kirim_(anggotaByNim_(pj.g(row, 'NIM/NIP')), 'Perpanjangan ditolak', 'Perpanjangan "' + s_(pj.g(row, 'Judul')) + '" ditolak.\nAlasan: ' + alasan +
+    '\nMohon kembalikan buku paling lambat ' + tglIndo_(dstr_(pj.g(row, 'Jatuh Tempo'))) + '.');
+  return { status: 'Ditolak', alasan: s_(alasan), judul: s_(pj.g(row, 'Judul')) };
 }
 
 function lunas_(no, mode, sess) {
@@ -799,50 +1065,80 @@ function lunas_(no, mode, sess) {
 
 /* ===================== Booking / reservasi ===================== */
 
-function pesan_(nim, id) {
+function pesan_(nim, id, tanggal) {
   var m = member_(tbl_(SH.ANG), nim);
   if (!m) throw new Error('SESI_HABIS');
   if (!/^aktif$/i.test(m.status)) throw new Error('Status keanggotaan ' + m.status + '. Hubungi petugas.');
   var b = tbl_(SH.BUKU), bi = b.find('ID_Buku', id);
   if (bi < 0) throw new Error('Buku tidak ditemukan.');
-  var rs = tbl_(SH.RES), e = tbl_(SH.EKS), pj = tbl_(SH.PJM), s = settings_();
-  var aktifPesan = rs.rows.filter(function (r) { return norm_(rs.g(r, 'NIM/NIP')) === nim && /Menunggu|Siap diambil/.test(s_(rs.g(r, 'Status'))); });
-  if (aktifPesan.some(function (r) { return s_(rs.g(r, 'ID_Buku')) === s_(id); })) throw new Error('Anda sudah memesan buku ini.');
+  var rs = tbl_(SH.RES), e = tbl_(SH.EKS), pj = tbl_(SH.PJM), s = settings_(), today = todayStr_();
+  var tgl = dstr_(tanggal) || hariBuka_(today);
+  if (tgl < today) throw new Error('Tanggal ambil tidak boleh sebelum hari ini.');
+  if (tgl > addDays_(today, s.jadwalMaks)) throw new Error('Tanggal ambil paling lambat ' + tglIndo_(addDays_(today, s.jadwalMaks)) + '.');
+  if (holiday_()[tgl] || (isYa_(s.minggu) && dow_(tgl) === 0)) throw new Error('Perpustakaan tutup pada ' + tglIndo_(tgl) + '. Pilih tanggal lain.');
+  var aktifPesan = rs.rows.filter(function (r) { return norm_(rs.g(r, 'NIM/NIP')) === nim && aktifRes_(s_(rs.g(r, 'Status'))); });
+  if (aktifPesan.some(function (r) { return s_(rs.g(r, 'ID_Buku')) === s_(id); })) throw new Error('Anda sudah membooking buku ini.');
   if (aktifPesan.length >= s.maksPesan) throw new Error('Maksimal ' + s.maksPesan + ' booking aktif. Batalkan salah satu dulu.');
   if (pinjamanAktif_(pj, nim).some(function (x) { return x.id === s_(id); })) throw new Error('Anda sedang meminjam buku ini.');
-  var cand = -1, punya = 0;
-  e.rows.forEach(function (r, i) {
-    if (s_(e.g(r, 'ID_Buku')) !== s_(id)) return;
-    var st = s_(e.g(r, 'Status')) || 'Tersedia';
-    if (/Dihapus|Hilang|Baca di tempat/.test(st)) return;
-    punya++;
-    if (st === 'Tersedia' && cand < 0) cand = i;
-  });
-  if (!punya) throw new Error('Buku ini tidak bisa dipesan (tidak ada eksemplar yang dapat dipinjam).');
+  var punya = e.rows.some(function (r) { return s_(e.g(r, 'ID_Buku')) === s_(id) && !/Dihapus|Hilang|Baca di tempat/.test(s_(e.g(r, 'Status')) || 'Tersedia'); });
+  if (!punya) throw new Error('Buku ini tidak bisa dibooking (tidak ada eksemplar yang dapat dipinjam).');
   var rid = noTransaksi_(rs, 'RS', 'ID Reservasi');
-  var judul = s_(b.g(b.rows[bi], 'Judul')), obj = { 'ID Reservasi': rid, 'NIM/NIP': txt_(nim), 'Nama': m.nama, 'ID_Buku': s_(id), 'Judul': judul, 'Tgl Pesan': new Date() };
-  var hasil;
-  if (cand >= 0) {
-    var batas = addDays_(todayStr_(), s.batasAmbil);
-    obj['Status'] = 'Siap diambil'; obj['Barcode Disiapkan'] = txt_(norm_(e.g(e.rows[cand], 'Barcode'))); obj['Batas Ambil'] = toDate_(batas);
-    e.set(cand, { 'Status': 'Dipesan' });
-    hasil = { status: 'Siap diambil', batas: tglIndo_(batas), rak: s_(e.g(e.rows[cand], 'Lokasi Rak')) };
-  } else {
-    obj['Status'] = 'Menunggu';
-    var urut = rs.rows.filter(function (r) { return s_(rs.g(r, 'ID_Buku')) === s_(id) && s_(rs.g(r, 'Status')) === 'Menunggu'; }).length + 1;
-    hasil = { status: 'Menunggu', urutan: urut };
+  var judul = s_(b.g(b.rows[bi], 'Judul'));
+  var k = rs.add({ 'ID Reservasi': rid, 'NIM/NIP': txt_(nim), 'Nama': m.nama, 'ID_Buku': s_(id), 'Judul': judul, 'Tgl Pesan': new Date(),
+    'Tanggal Ambil': toDate_(tgl), 'Status': 'Menunggu ACC' });
+  log_(nim, 'Booking', rid + ' ' + id + ' ambil ' + tgl);
+  if (!isYa_(s.accBooking)) { var h = setujuiRes_(rs, k, e, 'Otomatis'); h.rid = rid; h.judul = judul; return h; }
+  kirim_(m, 'Booking diterima', 'Booking "' + judul + '" untuk diambil ' + tglIndo_(tgl) + ' sudah tercatat dan menunggu persetujuan petugas.');
+  return { rid: rid, judul: judul, status: 'Menunggu ACC', ambil: tglIndo_(tgl) };
+}
+
+function setujuiRes_(rs, k, e, user) {
+  var idb = s_(rs.g(rs.rows[k], 'ID_Buku')), cand = -1;
+  e.rows.forEach(function (r, i) { if (cand < 0 && s_(e.g(r, 'ID_Buku')) === idb && (s_(e.g(r, 'Status')) || 'Tersedia') === 'Tersedia') cand = i; });
+  rs.set(k, { 'Diproses Oleh': user });
+  if (cand >= 0) { var x = siapkan_(rs, k, e, cand); return { status: 'Siap diambil', batas: x.batas, mulai: x.mulai, rak: x.rak }; }
+  rs.set(k, { 'Status': 'Antre' });
+  var urut = antreanKe_(rs, rs.rows[k]);
+  kirim_(anggotaByNim_(rs.g(rs.rows[k], 'NIM/NIP')), 'Booking disetujui (antre)', 'Booking "' + s_(rs.g(rs.rows[k], 'Judul')) +
+    '" disetujui. Semua eksemplar sedang dipinjam; Anda antrean ke-' + urut + '. Kami kirim email saat buku siap diambil.');
+  return { status: 'Antre', urutan: urut };
+}
+
+function accBooking_(rid, setuju, alasan, user) {
+  var rs = tbl_(SH.RES), i = rs.find('ID Reservasi', rid);
+  if (i < 0 || s_(rs.g(rs.rows[i], 'Status')) !== 'Menunggu ACC') throw new Error('Booking tidak ditemukan atau sudah diproses.');
+  if (setuju) { var h = setujuiRes_(rs, i, tbl_(SH.EKS), user); log_(user, 'ACC booking', rid + ' ' + h.status); return h; }
+  if (!s_(alasan)) throw new Error('Tuliskan alasan penolakan.');
+  rs.set(i, { 'Status': 'Ditolak', 'Catatan': s_(alasan), 'Diproses Oleh': user });
+  log_(user, 'Tolak booking', rid + ' ' + alasan);
+  kirim_(anggotaByNim_(rs.g(rs.rows[i], 'NIM/NIP')), 'Booking ditolak', 'Booking "' + s_(rs.g(rs.rows[i], 'Judul')) + '" ditolak petugas.\nAlasan: ' + alasan);
+  return { status: 'Ditolak' };
+}
+
+// Petugas membatalkan booking yang sudah berjalan (mis. buku didahulukan untuk dosen).
+function batalBookingPetugas_(rid, alasan, user) {
+  if (!s_(alasan)) throw new Error('Tuliskan alasan pembatalan agar anggota mendapat penjelasan.');
+  var rs = tbl_(SH.RES), i = rs.find('ID Reservasi', rid);
+  if (i < 0) throw new Error('Booking tidak ditemukan.');
+  var st = s_(rs.g(rs.rows[i], 'Status'));
+  if (!aktifRes_(st)) throw new Error('Booking ini sudah tidak aktif.');
+  rs.set(i, { 'Status': 'Dibatalkan petugas', 'Catatan': s_(alasan), 'Diproses Oleh': user });
+  var lanjut = null;
+  if (st === 'Siap diambil') {
+    var e = tbl_(SH.EKS), ei = e.find('Barcode', rs.g(rs.rows[i], 'Barcode Disiapkan'));
+    if (ei >= 0 && s_(e.g(e.rows[ei], 'Status')) === 'Dipesan') lanjut = lepasEksemplar_(e, ei);
   }
-  rs.add(obj);
-  log_(nim, 'Booking', rid + ' ' + id + ' ' + obj['Status']);
-  hasil.rid = rid; hasil.judul = judul;
-  return hasil;
+  log_(user, 'Batalkan booking', rid + ' ' + alasan);
+  kirim_(anggotaByNim_(rs.g(rs.rows[i], 'NIM/NIP')), 'Booking dibatalkan petugas', 'Mohon maaf, booking "' + s_(rs.g(rs.rows[i], 'Judul')) +
+    '" dibatalkan oleh petugas.\nAlasan: ' + alasan + '\nSilakan booking kembali atau hubungi petugas.');
+  return { status: 'Dibatalkan petugas', diteruskanKe: lanjut };
 }
 
 function batalPesan_(nim, rid) {
   var rs = tbl_(SH.RES), i = rs.find('ID Reservasi', rid);
   if (i < 0 || norm_(rs.g(rs.rows[i], 'NIM/NIP')) !== nim) throw new Error('Booking tidak ditemukan.');
   var st = s_(rs.g(rs.rows[i], 'Status'));
-  if (!/Menunggu|Siap diambil/.test(st)) throw new Error('Booking ini sudah tidak aktif.');
+  if (!aktifRes_(st)) throw new Error('Booking ini sudah tidak aktif.');
   rs.set(i, { 'Status': 'Dibatalkan' });
   if (st === 'Siap diambil') {
     var e = tbl_(SH.EKS), ei = e.find('Barcode', rs.g(rs.rows[i], 'Barcode Disiapkan'));
@@ -850,6 +1146,213 @@ function batalPesan_(nim, rid) {
   }
   log_(nim, 'Batal booking', rid);
   return true;
+}
+
+/* ===================== Dasbor persetujuan petugas ===================== */
+
+function persetujuan_() {
+  var pj = tbl_(SH.PJM), rs = tbl_(SH.RES), e = tbl_(SH.EKS), ang = tbl_(SH.ANG), s = settings_(), today = todayStr_();
+  var avail = {};
+  e.rows.forEach(function (r) { if ((s_(e.g(r, 'Status')) || 'Tersedia') === 'Tersedia') { var id = s_(e.g(r, 'ID_Buku')); avail[id] = (avail[id] || 0) + 1; } });
+  var bookingAcc = [], jadwal = [];
+  rs.rows.forEach(function (r) {
+    var st = s_(rs.g(r, 'Status'));
+    if (!aktifRes_(st)) return;
+    var o = resObj_(rs, r);
+    o.tersedia = avail[o.id] || 0;
+    if (st === 'Menunggu ACC') bookingAcc.push(o);
+    jadwal.push(o);
+  });
+  jadwal.sort(function (a, b) { return (a.ambilIso || '9') < (b.ambilIso || '9') ? -1 : (a.ambilIso || '9') > (b.ambilIso || '9') ? 1 : 0; });
+  var pinjamAcc = [], kembaliAcc = [], panjangAcc = [], dendaList = [], perAnggota = {}, total = 0;
+  pj.rows.forEach(function (r) {
+    var st = s_(pj.g(r, 'Status')), nim = norm_(pj.g(r, 'NIM/NIP'));
+    var base = { no: s_(pj.g(r, 'No. Transaksi')), nim: nim, nama: s_(pj.g(r, 'Nama')), barcode: norm_(pj.g(r, 'Barcode')), judul: s_(pj.g(r, 'Judul')) };
+    if (st === 'Menunggu ACC') {
+      var m = member_(ang, nim);
+      base.identitas = m ? identitas_(m) : null;
+      base.layak = m ? kelayakan_(m, pj, base.no) : ['NIM tidak terdaftar'];
+      base.diajukan = s_(pj.g(r, 'Catatan'));
+      pinjamAcc.push(base);
+    } else if (st === 'Menunggu ACC kembali') {
+      var due = dstr_(pj.g(r, 'Jatuh Tempo')), late = Math.max(0, diffDays_(due, today));
+      base.tempo = tglIndo_(due); base.terlambat = late; base.denda = late * s.denda;
+      base.diajukan = pj.g(r, 'Tgl Ajukan Kembali') instanceof Date ? fmt_(pj.g(r, 'Tgl Ajukan Kembali'), 'dd/MM HH:mm') : '';
+      kembaliAcc.push(base);
+    } else if (st === 'Dipinjam' && s_(pj.g(r, 'Pengajuan Perpanjang')) === 'Menunggu ACC') {
+      var i = pj.rows.indexOf(r), al = syaratPanjang_(pj, rs, i);
+      base.tempo = tglIndo_(dstr_(pj.g(r, 'Jatuh Tempo')));
+      base.tempoBaru = tglIndo_(jatuhTempo_(dstr_(pj.g(r, 'Jatuh Tempo')), s.lama));
+      base.halangan = al; base.ke = (Number(pj.g(r, 'Perpanjangan')) || 0) + 1;
+      panjangAcc.push(base);
+    }
+    if (s_(pj.g(r, 'Status Denda')) === 'Belum lunas') {
+      var d = Number(pj.g(r, 'Denda (Rp)')) || 0; total += d;
+      dendaList.push({ no: base.no, nim: nim, nama: base.nama, judul: base.judul, denda: d });
+      perAnggota[nim] = perAnggota[nim] || { nim: nim, nama: base.nama, total: 0, jumlah: 0 };
+      perAnggota[nim].total += d; perAnggota[nim].jumlah++;
+    }
+  });
+  var lunasBulan = 0;
+  pj.rows.forEach(function (r) {
+    if (/Lunas/.test(s_(pj.g(r, 'Status Denda'))) && dstr_(pj.g(r, 'Tgl Kembali')).slice(0, 7) === today.slice(0, 7)) lunasBulan += Number(pj.g(r, 'Denda (Rp)')) || 0;
+  });
+  var anggotaDenda = Object.keys(perAnggota).map(function (k) { return perAnggota[k]; }).sort(function (a, b) { return b.total - a.total; });
+  return {
+    jumlah: { booking: bookingAcc.length, pinjam: pinjamAcc.length, kembali: kembaliAcc.length, perpanjang: panjangAcc.length,
+      jadwalHariIni: jadwal.filter(function (x) { return x.ambilIso === today; }).length, denda: dendaList.length },
+    bookingAcc: bookingAcc, pinjamAcc: pinjamAcc, kembaliAcc: kembaliAcc, panjangAcc: panjangAcc, jadwal: jadwal,
+    denda: { total: total, totalTeks: rupiah_(total), transaksi: dendaList.length, anggota: anggotaDenda.length, lunasBulanIni: lunasBulan,
+      perAnggota: anggotaDenda.slice(0, 50), daftar: dendaList.slice(0, 100) },
+    wajibVerif: isYa_(s.verifikasi)
+  };
+}
+
+function ringkas_() { return persetujuan_().jumlah; }
+
+/* ===================== Anggota (admin) ===================== */
+
+function tambahAnggota_(d, user) {
+  var nim = cleanNim_(d.nim);
+  if (!/^[0-9A-Za-z.\-]{4,25}$/.test(nim)) throw new Error('Format NIM/NIP tidak valid.');
+  if (!s_(d.nama)) throw new Error('Nama wajib diisi.');
+  if (s_(d.email) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s_(d.email))) throw new Error('Format email tidak valid.');
+  var t = tbl_(SH.ANG);
+  if (member_(t, nim)) throw new Error('NIM ' + nim + ' sudah terdaftar.');
+  t.add({ 'NIM/NIP': txt_(nim), 'Nama': s_(d.nama), 'Prodi/Unit': s_(d.prodi), 'Angkatan': s_(d.angkatan), 'No. HP': txt_(s_(d.hp)),
+    'Email': s_(d.email), 'Jenis Anggota': s_(d.jenis) || 'Mahasiswa', 'Status': 'Aktif', 'Tanggal Daftar': toDate_(todayStr_()),
+    'Berlaku Sampai': dstr_(d.berlaku) ? toDate_(dstr_(d.berlaku)) : '', 'Catatan': 'Didaftarkan ' + user });
+  log_(user, 'Tambah anggota', nim + ' ' + d.nama);
+  return { nim: nim, nama: s_(d.nama), pin: defaultPin_(nim) };
+}
+
+function kartuCetak_(p) {
+  var t = tbl_(SH.ANG), s = settings_(), list = [];
+  var nims = (p.nims || []).map(norm_).filter(function (x) { return x; });
+  t.rows.forEach(function (r, i) {
+    if (!norm_(t.g(r, 'NIM/NIP'))) return;
+    var m = memRow_(t, i);
+    if (nims.length) { if (nims.indexOf(m.nim) < 0) return; }
+    else {
+      if (p.prodi && m.prodi.toLowerCase() !== s_(p.prodi).toLowerCase()) return;
+      if (p.angkatan && s_(m.angkatan) !== s_(p.angkatan)) return;
+      if (!p.prodi && !p.angkatan) return;
+    }
+    list.push(identitas_(m));
+  });
+  if (list.length > 300) list = list.slice(0, 300);
+  var tidak = nims.filter(function (n) { return !list.some(function (x) { return x.nim === n; }); });
+  return { nama: s.nama, instansi: s.instansi, kartu: list, tidakDitemukan: tidak };
+}
+
+/* ===================== Jurnal kampus (OJS / OAI-PMH) ===================== */
+
+function daftarJurnal_() {
+  var t = tbl_(SH.JRN);
+  return t.rows.filter(function (r) { return s_(t.g(r, 'URL OJS')); }).map(function (r) {
+    return { nama: s_(t.g(r, 'Nama Jurnal')), url: s_(t.g(r, 'URL OJS')), aktif: s_(t.g(r, 'Aktif')) !== 'Tidak',
+      sinkron: t.g(r, 'Terakhir Sinkron') instanceof Date ? fmt_(t.g(r, 'Terakhir Sinkron'), 'dd/MM/yyyy HH:mm') : s_(t.g(r, 'Terakhir Sinkron')),
+      jumlah: Number(t.g(r, 'Jumlah Artikel')) || 0 };
+  });
+}
+
+function tambahJurnal_(d, user) {
+  var url = s_(d.url).replace(/\/+$/, '');
+  if (!/^https?:\/\/.+/.test(url)) throw new Error('Isi alamat jurnal OJS yang lengkap, contoh https://ejournal.kampus.ac.id/index.php/namajurnal');
+  if (!s_(d.nama)) throw new Error('Nama jurnal wajib diisi.');
+  var t = tbl_(SH.JRN);
+  if (t.rows.some(function (r) { return s_(t.g(r, 'URL OJS')).replace(/\/+$/, '') === url; })) throw new Error('Jurnal ini sudah terdaftar.');
+  t.add({ 'Nama Jurnal': s_(d.nama), 'URL OJS': url, 'Aktif': 'Ya', 'Jumlah Artikel': 0 });
+  log_(user, 'Tambah jurnal', d.nama + ' ' + url);
+  return daftarJurnal_();
+}
+
+function oaiUrl_(url) {
+  url = s_(url).replace(/\/+$/, '');
+  return /\/oai$/.test(url) ? url : url + '/oai';
+}
+function xmlTeks_(s) {
+  return s_(s).replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]+>/g, ' ')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+    .replace(/&#(\d+);/g, function (m, n) { return String.fromCharCode(+n); }).replace(/&#x([0-9a-f]+);/gi, function (m, n) { return String.fromCharCode(parseInt(n, 16)); })
+    .replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+}
+function dcAll_(rec, tag) {
+  var re = new RegExp('<dc:' + tag + '(?:\\s[^>]*)?>([\\s\\S]*?)</dc:' + tag + '>', 'g'), out = [], m;
+  while ((m = re.exec(rec))) { var v = xmlTeks_(m[1]); if (v) out.push(v); }
+  return out;
+}
+function parseOai_(xml, jurnal) {
+  var recs = [], re = /<record>([\s\S]*?)<\/record>/g, m;
+  while ((m = re.exec(xml))) {
+    var r = m[1];
+    if (/<header[^>]*status="deleted"/.test(r)) continue;
+    var id = xmlTeks_((r.match(/<identifier>([\s\S]*?)<\/identifier>/) || [])[1]);
+    var judul = dcAll_(r, 'title')[0];
+    if (!judul) continue;
+    var url = dcAll_(r, 'identifier').filter(function (x) { return /^https?:\/\//.test(x); })[0] || dcAll_(r, 'relation').filter(function (x) { return /^https?:\/\//.test(x); })[0] || '';
+    var tahun = ((dcAll_(r, 'date')[0] || '').match(/\d{4}/) || [''])[0];
+    recs.push([jurnal, judul, dcAll_(r, 'creator').join('; '), tahun, dcAll_(r, 'subject').join('; '),
+      (dcAll_(r, 'description')[0] || '').slice(0, 1500), url, id]);
+  }
+  var tok = (xml.match(/<resumptionToken[^>]*>([^<]+)<\/resumptionToken>/) || [])[1];
+  var err = (xml.match(/<error[^>]*code="([^"]+)"/) || [])[1];
+  return { records: recs, token: tok ? xmlTeks_(tok) : '', error: err || '' };
+}
+
+function sinkronJurnal_(user) {
+  var t = tbl_(SH.JRN), art = ss_().getSheetByName(SH.ART), mulai = Date.now(), hasil = [];
+  var lr = art.getLastRow(), lc = Math.max(art.getLastColumn(), SCHEMA.Artikel_Jurnal.length);
+  var lama = lr > 1 ? art.getRange(2, 1, lr - 1, lc).getValues() : [];
+  var baru = {};
+  t.rows.forEach(function (r, i) {
+    var nama = s_(t.g(r, 'Nama Jurnal')), url = s_(t.g(r, 'URL OJS'));
+    if (!url || s_(t.g(r, 'Aktif')) === 'Tidak') return;
+    if (Date.now() - mulai > 270000) { hasil.push({ nama: nama, pesan: 'Dilewati (waktu habis), jalankan lagi.' }); return; }
+    var recs = [], token = '', page = 0, pesan = '';
+    try {
+      do {
+        var q = token ? '?verb=ListRecords&resumptionToken=' + encodeURIComponent(token) : '?verb=ListRecords&metadataPrefix=oai_dc';
+        var res = UrlFetchApp.fetch(oaiUrl_(url) + q, { muteHttpExceptions: true, followRedirects: true });
+        if (res.getResponseCode() !== 200) throw new Error('HTTP ' + res.getResponseCode());
+        var p = parseOai_(res.getContentText(), nama);
+        if (p.error && p.error !== 'noRecordsMatch') throw new Error('OAI ' + p.error);
+        recs = recs.concat(p.records); token = p.token; page++;
+      } while (token && page < 60 && Date.now() - mulai < 270000);
+      baru[nama] = recs;
+      t.set(i, { 'Terakhir Sinkron': new Date(), 'Jumlah Artikel': recs.length });
+      pesan = recs.length + ' artikel';
+    } catch (e) { pesan = 'Gagal: ' + (e.message || e) + '. Periksa alamat OJS dan pastikan OAI aktif.'; }
+    hasil.push({ nama: nama, pesan: pesan });
+  });
+  var semua = lama.filter(function (row) { return !(s_(row[0]) in baru); }).map(function (row) { return row.slice(0, 8); });
+  Object.keys(baru).forEach(function (k) { semua = semua.concat(baru[k]); });
+  if (lr > 1) art.getRange(2, 1, lr - 1, lc).clearContent();
+  if (semua.length) art.getRange(2, 1, semua.length, 8).setValues(semua);
+  log_(user || 'sistem', 'Sinkron jurnal', hasil.map(function (h) { return h.nama + ': ' + h.pesan; }).join(' | '));
+  return { hasil: hasil, total: semua.length };
+}
+function sinkronJurnal() { return sinkronJurnal_('sistem'); }
+
+function cariJurnal_(p) {
+  var q = s_(p.q).toLowerCase(), terms = q.split(/\s+/).filter(function (x) { return x; });
+  if (!terms.length) throw new Error('Ketik kata kunci artikel.');
+  var out = [], sh = ss_().getSheetByName(SH.ART);
+  if (sh && sh.getLastRow() > 1) {
+    sh.getRange(2, 1, sh.getLastRow() - 1, 8).getValues().forEach(function (r) {
+      var hay = [r[1], r[2], r[4], r[0]].join(' ').toLowerCase();
+      if (terms.every(function (t) { return hay.indexOf(t) >= 0; }))
+        out.push({ jurnal: s_(r[0]), judul: s_(r[1]), penulis: s_(r[2]), tahun: s_(r[3]), kataKunci: s_(r[4]), abstrak: s_(r[5]).slice(0, 400), url: s_(r[6]) });
+    });
+  }
+  out.sort(function (a, b) { return (b.tahun || '0') > (a.tahun || '0') ? 1 : (b.tahun || '0') < (a.tahun || '0') ? -1 : 0; });
+  var live = [];
+  try {
+    live = daftarJurnal_().filter(function (j) { return j.aktif; }).map(function (j) {
+      return { nama: j.nama, url: j.url.replace(/\/oai$/, '') + '/search/search?query=' + encodeURIComponent(s_(p.q)) };
+    });
+  } catch (e) { /* jurnal opsional */ }
+  return { jumlah: out.length, hasil: out.slice(0, 50), cariLangsung: live };
 }
 
 /* ===================== Rak & eksemplar ===================== */
@@ -1079,7 +1582,7 @@ function harian() {
     if (s_(rs.g(r, 'Status')) !== 'Siap diambil') return;
     var batas = dstr_(rs.g(r, 'Batas Ambil'));
     if (batas && batas < today) {
-      rs.set(i, { 'Status': 'Kedaluwarsa' });
+      rs.set(i, { 'Status': 'Kedaluwarsa', 'Catatan': 'Tidak diambil sampai ' + tglIndo_(batas) });
       var ei = e.find('Barcode', rs.g(r, 'Barcode Disiapkan'));
       if (ei >= 0 && s_(e.g(e.rows[ei], 'Status')) === 'Dipesan') lepasEksemplar_(e, ei);
       n++;
@@ -1105,6 +1608,7 @@ function harian() {
       mails++;
     });
   }
+  try { if (dow_(today) === 1 && daftarJurnal_().some(function (j) { return j.aktif; })) sinkronJurnal_('sistem'); } catch (e) { /* jurnal opsional */ }
   log_('sistem', 'Tugas harian', n + ' booking kedaluwarsa, ' + mails + ' email');
   return { kedaluwarsa: n, email: mails };
 }
